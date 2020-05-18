@@ -40,13 +40,23 @@ bot.event("message_new", (ctx) => {
       connection.connect(function (err) {
         if (err) {
           return console.error("Error: " + err.message);
-        } else {
-          console.log("Successfuly connected.");
         }
       });
+      let id = ctx.message.user_id;
 
-      connection.end(function(err){
-        if(err){
+      connection.query("SELECT * FROM Users WHERE ID = ?", id,
+        function (err, results) {
+          if (err) { console.log(err); }
+          if (results.length != 0) {
+            ctx.reply("Вы в базе!");
+          }
+          else {
+            ctx.reply("Вы не в базе!");
+          }
+        });
+
+      connection.end(function (err) {
+        if (err) {
           return console.log("Error: " + err.message);
         }
       });
