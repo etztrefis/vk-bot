@@ -45,6 +45,12 @@ bot.event("message_new", (ctx) => {
         }
       });
 
+      connection.end(function(err){
+        if(err){
+          return console.log("Error: " + err.message);
+        }
+      });
+
       break;
     case "start":
     case "Start":
