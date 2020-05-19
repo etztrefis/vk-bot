@@ -31,39 +31,38 @@ bot.event("message_new", (ctx) => {
   //CHECK TO COMMAND
   switch (ctx.message.body) {
     case "!меню":
-      const connection = mysql.createConnection({
+      const connection = mysql.createPool({
+        connectionLimit: 2,
         host: process.env.SERVERNAME,
         user: process.env.USERNAME,
         database: process.env.DBNAME,
         password: process.env.PASSWORD,
       });
-      connection.connect(function (err) {
-        if (err) {
-          return console.error("Error: " + err.message);
-        }
-      });
       let id = ctx.message.user_id;
 
       connection.query("SELECT * FROM Users WHERE ID = ?", id,
         function (err, results) {
-          if (err) { console.log(err); }
+          if (err) { console.log(err.message); }
           if (results.length != 0) {
-
-
-
-
+            let now = new Date();
+            let dayOfWeek = now.getDay();
+            let year = now.getFullYear();
+            let month = now.getMonth();
+            let mday = now.getDate() + 1;
+            connection.query("SELECT First, FirstPrice, Second, SecondPrice, Salad, SaladPrice, Liquid, LiquidPrice FROM Menu WHERE DayOfWeek = ?",
+              dayOfWeek, function (err, result) {
+                if (err) { console.log(err.message) }
+                if (result != 0) {
+                  ctx.reply("Меню на: " + mday + "." + month + "." + year + "\r\n \r\n"
+                  );
+                  console.log(result);
+                }
+              });
           }
           else {
             ctx.reply("Вы не можете использовать эту команду, так как вас нету в базе предприятия.");
           }
         });
-
-      connection.end(function (err) {
-        if (err) {
-          return console.log("Error: " + err.message);
-        }
-      });
-
       break;
     case "start":
     case "Start":
