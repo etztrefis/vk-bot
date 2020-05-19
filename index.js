@@ -48,21 +48,19 @@ bot.event("message_new", (ctx) => {
         function (err, results) {
           if (err) { console.log(err); }
           if (results.length != 0) {
-
-
-
-
-
+            ctx.reply("Вы в базе!");
           }
           else {
-            ctx.reply("Вы не можете использовать данную команду, так как вас нету в базе данных предприятия.");
+            ctx.reply("Вы не в базе!");
           }
         });
+
       connection.end(function (err) {
         if (err) {
           return console.log("Error: " + err.message);
         }
       });
+
       break;
     case "start":
     case "Start":
