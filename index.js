@@ -48,10 +48,13 @@ bot.event("message_new", (ctx) => {
         function (err, results) {
           if (err) { console.log(err); }
           if (results.length != 0) {
-            ctx.reply("Вы в базе!");
+
+
+
+
           }
           else {
-            ctx.reply("Вы не в базе!");
+            ctx.reply("Вы не можете использовать эту команду, так как вас нету в базе предприятия.");
           }
         });
 
