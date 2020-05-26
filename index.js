@@ -56,7 +56,7 @@ bot.event("message_new", (ctx) => {
                   ctx.reply("Меню на: " + mday + "." + month + "." + year + "\r\n \r\n"
                   );
                   console.log(result);
-
+                  
                 }
               });
           }
