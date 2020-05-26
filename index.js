@@ -1,5 +1,7 @@
 require("dotenv").config();
 const VkBot = require("node-vk-bot-api");
+const Scene = require('node-vk-bot-api/lib/scene');
+const Stage = require('node-vk-bot-api/lib/stage');
 const fs = require("fs");
 const mysql = require("mysql2");
 
@@ -35,26 +37,12 @@ bot.event("message_new", (ctx) => {
   fs.appendFile("logs.txt", info, function (error) {
     if (error) throw error;
   });
-
-  bot.command('!Заказ', (ctx) => {
-    ctx.scene.enter('Создание заказа');
-  });
-
-  /*cosnt scene = new Scene('Создание заказа',
-    (ctx) => {
-      ctx.scene.next();
-      ctx.reply('How old are you?');
-    },
-    
-  );*/
-
+  
   //CHECK TO COMMAND
-
-
   switch (ctx.message.body) {
     case "!меню":
+    case "!Меню":
       let id = ctx.message.user_id;
-
       connection.query("SELECT * FROM Users WHERE ID = ?", id,
         function (err, results) {
           if (err) { console.log(err.message); }
@@ -92,7 +80,36 @@ bot.event("message_new", (ctx) => {
         "Начало работы с чат-ботом. \r\n !команды - команды, доступные для использования."
       );
       break;
+
+    case "!Заказ":
+    case "!заказ":
+      
+
+      const scene = new Scene('Создание заказа.',
+        (ctx) => {
+          ctx.scene.next();
+          ctx.reply('Напишите номера блюд для ващего заказа. Будьте внимательны к дате.');
+        },
+        (ctx) => {
+          let numbers = ctx.message.body;
+          ctx.scene.next();
+          ctx.reply("Заказ добавлен в систему.");
+        },
+        (ctx) => {
+          ctx.scene.leave();
+          ctx.reply("Ваш заказ:" + numbers + "Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 -следующего дня-.");
+        }
+      );
+      ctx.scene.enter('Создание заказа.');
+      const stage = new Stage(scene);
+      bot.use(stage.middleware());
+      break;
     default:
       ctx.reply("Неизвестная команда.");
   }
 });
+
+
+
+
+
