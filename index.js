@@ -37,6 +37,7 @@ bot.event("message_new", (ctx) => {
       ctx.scene.next();
       ctx.reply('How old are you?');
     },
+    
   );*/
 
   //CHECK TO COMMAND
