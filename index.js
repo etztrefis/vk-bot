@@ -28,6 +28,17 @@ bot.event("message_new", (ctx) => {
     if (error) throw error;
   });
 
+  bot.command('!Заказ', (ctx) => {
+    ctx.scene.enter('Создание заказа');
+  });
+
+  /*cosnt scene = new Scene('Создание заказа',
+    (ctx) => {
+      ctx.scene.next();
+      ctx.reply('How old are you?');
+    },
+  );*/
+
   //CHECK TO COMMAND
   switch (ctx.message.body) {
     case "!меню":
@@ -56,7 +67,7 @@ bot.event("message_new", (ctx) => {
                   ctx.reply("Меню на: " + mday + "." + month + "." + year + "\r\n \r\n"
                   );
                   console.log(result);
-                  
+
                 }
               });
           }
@@ -70,9 +81,6 @@ bot.event("message_new", (ctx) => {
       ctx.reply(
         "Начало работы с чат-ботом. \r\n !команды - команды, доступные для использования."
       );
-      break;
-    case "!Заказ":
-      
       break;
     default:
       ctx.reply("Неизвестная команда.");
