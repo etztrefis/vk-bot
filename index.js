@@ -10,6 +10,14 @@ const bot = new VkBot({
   confirmation: process.env.CONFIRMATION,
 });
 
+const connection = mysql.createPool({
+  connectionLimit: 2,
+  host: process.env.SERVERNAME,
+  user: process.env.USERNAME,
+  database: process.env.DBNAME,
+  password: process.env.PASSWORD,
+});
+
 bot.startPolling(() => {
   console.log("Bot started.");
 });
@@ -41,15 +49,10 @@ bot.event("message_new", (ctx) => {
   );*/
 
   //CHECK TO COMMAND
+
+
   switch (ctx.message.body) {
     case "!меню":
-      const connection = mysql.createPool({
-        connectionLimit: 2,
-        host: process.env.SERVERNAME,
-        user: process.env.USERNAME,
-        database: process.env.DBNAME,
-        password: process.env.PASSWORD,
-      });
       let id = ctx.message.user_id;
 
       connection.query("SELECT * FROM Users WHERE ID = ?", id,
@@ -57,20 +60,26 @@ bot.event("message_new", (ctx) => {
           if (err) { console.log(err.message); }
           if (results.length != 0) {
             let now = new Date();
-            let dayOfWeek = now.getDay();
+            let dayOfWeek = now.getDay() + 1;
             let year = now.getFullYear();
             let month = now.getMonth();
             let mday = now.getDate() + 1;
-            connection.query("SELECT First, FirstPrice, Second, SecondPrice, Salad, SaladPrice, Liquid, LiquidPrice FROM Menu WHERE DayOfWeek = ?",
-              dayOfWeek, function (err, result) {
-                if (err) { console.log(err.message) }
-                if (result != 0) {
-                  ctx.reply("Меню на: " + mday + "." + month + "." + year + "\r\n \r\n"
-                  );
-                  console.log(result);
 
+            let query = "SELECT F.Name as First, M.FirstPrice, S.Name as Second, M.SecondPrice, T.Name as Salad, M.SaladPrice, L.Name as Liquid, M.LiquidPrice FROM Menu M LEFT OUTER JOIN Courses F ON F.CourseID = M.First LEFT OUTER JOIN Courses S ON S.CourseID = M.Second LEFT OUTER JOIN Courses T ON T.CourseID = M.Salad LEFT OUTER JOIN Courses L ON L.CourseID = M.Liquid WHERE M.DayOfWeek = ?";
+            connection.query(query, dayOfWeek, function (err, result) {
+              if (err) { console.log(err.message) }
+              if (result !== 0) {
+                let row = [result[0].First, result[0].FirstPrice, result[0].Second, result[0].SecondPrice, result[0].Salad, result[0].SaladPrice, result[0].Liquid, result[0].LiquidPrice];
+                for (let i = 0; i < row.length; i++) {
+                  if (row[i] === null) { row[i] = "-"; }
                 }
-              });
+                ctx.reply("Меню на: " + mday + "." + month + "." + year + "\r\n \r\n" +
+                  "1." + row[0] + " " + row[1] + " руб.\r\n" +
+                  "2." + row[2] + " " + row[3] + " руб.\r\n" +
+                  "3." + row[4] + " " + row[5] + " руб.\r\n" +
+                  "4." + row[6] + " " + row[7] + " руб.\r\n");
+              }
+            });
           }
           else {
             ctx.reply("Вы не можете использовать эту команду, так как вас нету в базе предприятия.");
