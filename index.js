@@ -37,8 +37,21 @@ const scene = new Scene('order',
   },
   (ctx) => {
     let numbers = ctx.message.body;
-    ctx.reply("Ваш заказ: " + numbers + ".  Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " + mday + "." + month + "." + year + ".");
-    ctx.scene.leave()
+    ctx.reply("Вы уверены?(Да или нет)");
+    ctx.scene.next();
+  },
+  (ctx) => {
+    let yesOrNo = ctx.message.body;
+    if (yesOrNo === "Да" || yesOrNo === "да") { ctx.reply("123"); ctx.scene.next(); }
+    else if (yesOrNo === "Нет" || yesOrNo === "нет") { ctx.reply("Заказ отменен."); ctx.scene.leave(); }
+    else { ctx.reply("Принимаются только значения да или нет."); }
+    console.log(yesOrNo);
+    //doesnt work PepeHands
+  },
+  (ctx) => {
+    console.log("1");
+    ctx.scene.leave();
+    ctx.reply("Ваш заказ: " + /*numbers*/ + ".  Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " + mday + "." + month + "." + year + ".");
   },
 )
 const session = new Session()
