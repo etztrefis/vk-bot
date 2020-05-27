@@ -29,6 +29,7 @@ let now = new Date();
 let year = now.getFullYear();
 let month = now.getMonth();
 let mday = now.getDate() + 1;
+let mainOrder = "";
 
 const scene = new Scene('order',
   (ctx) => {
@@ -36,22 +37,19 @@ const scene = new Scene('order',
     ctx.reply('Напишите номера блюд из меню через запятую на: ' + mday + "." + month + "." + year + ' Например => "2,3,1". Будьте внимательны к дате. ')
   },
   (ctx) => {
-    let numbers = ctx.message.body;
+    mainOrder = ctx.message.body;
     ctx.reply("Вы уверены?(Да или нет)");
     ctx.scene.next();
   },
   (ctx) => {
     let yesOrNo = ctx.message.body;
-    if (yesOrNo === "Да" || yesOrNo === "да") { ctx.reply("123"); ctx.scene.next(); }
+    if (yesOrNo === "Да" || yesOrNo === "да") {
+      ctx.reply("Ваш заказ: " + mainOrder + ".  Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " + mday + "." + month + "." + year + ".");
+    }
     else if (yesOrNo === "Нет" || yesOrNo === "нет") { ctx.reply("Заказ отменен."); ctx.scene.leave(); }
     else { ctx.reply("Принимаются только значения да или нет."); }
     console.log(yesOrNo);
-    //doesnt work PepeHands
-  },
-  (ctx) => {
-    console.log("1");
     ctx.scene.leave();
-    ctx.reply("Ваш заказ: " + /*numbers*/ + ".  Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " + mday + "." + month + "." + year + ".");
   },
 )
 const session = new Session()
