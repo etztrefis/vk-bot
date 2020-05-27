@@ -89,3 +89,10 @@ Tue May 26 2020 18:14:23 GMT+0200 (Central European Summer Time) message:!мен
 Tue May 26 2020 18:15:11 GMT+0200 (Central European Summer Time) message:!заказ id:168743256
 Tue May 26 2020 18:16:52 GMT+0200 (Central European Summer Time) message:!заказ id:168743256
 Tue May 26 2020 18:24:12 GMT+0200 (Central European Summer Time) message:!меню id:168743256
+Wed May 27 2020 06:42:24 GMT+0200 (Central European Summer Time) message:!заказ id:168743256
+Wed May 27 2020 06:42:43 GMT+0200 (Central European Summer Time) message:!заказ id:168743256
+Wed May 27 2020 06:43:23 GMT+0200 (Central European Summer Time) message:!заказ id:168743256
+Wed May 27 2020 06:46:36 GMT+0200 (Central European Summer Time) message:!заказ id:168743256
+Wed May 27 2020 06:47:21 GMT+0200 (Central European Summer Time) message:!заказ id:168743256
+Wed May 27 2020 06:47:57 GMT+0200 (Central European Summer Time) message:!заказ id:168743256
+Wed May 27 2020 07:15:30 GMT+0200 (Central European Summer Time) message:123 id:168743256
