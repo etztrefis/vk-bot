@@ -14,7 +14,7 @@ const bot = new VkBot({
 });
 
 const connection = mysql.createPool({
-  connectionLimit: 2,
+  connectionLimit: 3,
   host: process.env.SERVERNAME,
   user: process.env.USERNAME,
   database: process.env.DBNAME,
@@ -30,6 +30,7 @@ let year = now.getFullYear();
 let month = now.getMonth();
 let mday = now.getDate() + 1;
 let mainOrder = "";
+let finalOrder = [];
 
 const scene = new Scene('order',
   (ctx) => {
@@ -38,29 +39,47 @@ const scene = new Scene('order',
   },
   (ctx) => {
     mainOrder = ctx.message.body;
-    ctx.reply("Вы уверены?(Да или нет)");
-    ctx.scene.next();
+    mainOrder = mainOrder.replace(/\s+/g, '');
+    finalOrder = mainOrder.split(/,\s*/);
+    for (let i = 0; i < finalOrder.length; i++) {
+      if (!isNaN(finalOrder[i])) { }
+      else {
+        ctx.reply("Неверный ввод заказа. Возможно допущены строковые символы.");
+        ctx.scene.leave();
+        break;
+      }
+    }
+    try {
+      ctx.reply("Вы уверены? (Да или нет)");
+      ctx.scene.next();
+    } catch (err) { }
   },
   (ctx) => {
     let yesOrNo = ctx.message.body;
     if (yesOrNo === "Да" || yesOrNo === "да") {
-      ctx.reply("Ваш заказ: " + mainOrder + ".  Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " + mday + "." + month + "." + year + ".");
+      ctx.reply("Ваш заказ: " + finalOrder[1] + " добавлен в систему. Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " + mday + "." + month + "." + year + ".");
     }
     else if (yesOrNo === "Нет" || yesOrNo === "нет") { ctx.reply("Заказ отменен."); ctx.scene.leave(); }
     else { ctx.reply("Принимаются только значения да или нет."); }
-    console.log(yesOrNo);
-    ctx.scene.leave();
   },
-)
-const session = new Session()
-const stage = new Stage(scene)
+);
+const session = new Session();
+const stage = new Stage(scene);
 
-bot.use(session.middleware())
-bot.use(stage.middleware())
+bot.use(session.middleware());
+bot.use(stage.middleware());
 //ДОБАВИТЬ ПРОВЕРКИ
+
 bot.command('!заказ', (ctx) => {
-  ctx.scene.enter('order')
-})
+  let id = ctx.message.user_id;
+  connection.query("SELECT * FROM Users WHERE ID = ?", id, function (err, results) {
+    if (err) { console.log(err.message); }
+    if (results.length != 0) {
+      ctx.scene.enter('order')
+    }
+    else { ctx.reply("Вы не можете использовать эту команду, так как вас нету в базе предприятия."); }
+  });
+});
 
 bot.event("message_new", (ctx) => {
   //WRITNIG LOGS IN LOGS.TXT FILE

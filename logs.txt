@@ -100,3 +100,16 @@ Wed May 27 2020 11:45:41 GMT+0200 (Central European Summer Time) message:!зак
 Wed May 27 2020 11:47:02 GMT+0200 (Central European Summer Time) message:вап id:168743256
 Wed May 27 2020 11:48:33 GMT+0200 (Central European Summer Time) message:ыва id:168743256
 Wed May 27 2020 12:13:48 GMT+0200 (Central European Summer Time) message:пыв id:168743256
+Thu May 28 2020 07:08:09 GMT+0200 (Central European Summer Time) message:fas id:168743256
+Thu May 28 2020 07:08:15 GMT+0200 (Central European Summer Time) message:!меню id:168743256
+Thu May 28 2020 07:08:17 GMT+0200 (Central European Summer Time) message:!заказ id:168743256
+Thu May 28 2020 07:10:34 GMT+0200 (Central European Summer Time) message:ssss id:168743256
+Thu May 28 2020 07:13:45 GMT+0200 (Central European Summer Time) message:sad id:168743256
+Thu May 28 2020 07:15:16 GMT+0200 (Central European Summer Time) message:фыа id:575736093
+Thu May 28 2020 07:15:58 GMT+0200 (Central European Summer Time) message:нет id:575736093
+Thu May 28 2020 07:16:04 GMT+0200 (Central European Summer Time) message:афы id:575736093
+Thu May 28 2020 08:06:16 GMT+0200 (Central European Summer Time) message:ыа id:168743256
+Thu May 28 2020 08:07:06 GMT+0200 (Central European Summer Time) message:афы id:168743256
+Thu May 28 2020 08:10:06 GMT+0200 (Central European Summer Time) message:пв id:168743256
+Thu May 28 2020 08:11:49 GMT+0200 (Central European Summer Time) message:авы id:168743256
+Thu May 28 2020 08:15:06 GMT+0200 (Central European Summer Time) message:п id:168743256
