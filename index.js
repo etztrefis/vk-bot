@@ -30,7 +30,8 @@ let year = now.getFullYear();
 let month = now.getMonth();
 let mday = now.getDate() + 1;
 let mainOrder = "";
-let finalOrder = [];
+let finalOrder = [4];
+let totalPrice = [];
 
 const scene = new Scene('order',
   (ctx) => {
@@ -55,9 +56,43 @@ const scene = new Scene('order',
     } catch (err) { }
   },
   (ctx) => {
+    console.log(finalOrder);
     let yesOrNo = ctx.message.body;
     if (yesOrNo === "Да" || yesOrNo === "да") {
-      ctx.reply("Ваш заказ: " + finalOrder[1] + " добавлен в систему. Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " + mday + "." + month + "." + year + ".");
+      connection.query("SELECT SUM(Price) as Sum FROM Courses WHERE CourseID IN(?)", finalOrder, function (err0, result) {
+        if (err0) console.log(err0);
+        console.log(result);
+      });
+      let add = [
+        '',
+        now,
+        ctx.message.user_id,
+        finalOrder[0],
+        finalOrder[1],
+        finalOrder[2],
+        finalOrder[3],
+        95,
+      ];
+
+      for (let i = 0; i < add.length; i++) {
+        if (!add[i]) {
+          add[i] = '';
+        }
+      }
+      console.log(add);
+      connection.query("INSERT INTO Orders VALUES ?", add, function (err) {
+        if (err) console.log(err);
+        else {
+          for (let i = 0; i < finalOrder; i++) {
+            connection.query("UPDATE Products SET Amount = Amount-100 WHERE id=?", finalOrder[i], function (err1) {
+              if (err1) console.log(err1);
+              else {
+                ctx.reply("Ваш заказ: " + finalOrder + " добавлен в систему. Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " + mday + "." + month + "." + year + ".");
+              }
+            });
+          }
+        }
+      });
     }
     else if (yesOrNo === "Нет" || yesOrNo === "нет") { ctx.reply("Заказ отменен."); ctx.scene.leave(); }
     else { ctx.reply("Принимаются только значения да или нет."); }
