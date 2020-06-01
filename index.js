@@ -32,6 +32,7 @@ let mday = now.getDate() + 1;
 let mainOrder = "";
 let finalOrder = [4];
 let totalPrice = [];
+let orderMax = [];
 
 const scene = new Scene('order',
   (ctx) => {
@@ -42,6 +43,8 @@ const scene = new Scene('order',
     mainOrder = ctx.message.body;
     mainOrder = mainOrder.replace(/\s+/g, '');
     finalOrder = mainOrder.split(/,\s*/);
+    finalOrder.sort((a, b) => a - b);
+    orderMax = finalOrder.slice();
     for (let i = 0; i < finalOrder.length; i++) {
       if (!isNaN(finalOrder[i])) { }
       else {
@@ -50,16 +53,31 @@ const scene = new Scene('order',
         break;
       }
     }
+    let now = new Date();
+    let dayOfWeek = now.getDay() + 1;
+    let query = "SELECT F.CourseID as First, M.FirstPrice, S.CourseID as Second, M.SecondPrice, T.CourseID as Salad, M.SaladPrice, L.CourseID as Liquid, M.LiquidPrice FROM Menu M LEFT OUTER JOIN Courses F ON F.CourseID = M.First LEFT OUTER JOIN Courses S ON S.CourseID = M.Second LEFT OUTER JOIN Courses T ON T.CourseID = M.Salad LEFT OUTER JOIN Courses L ON L.CourseID = M.Liquid WHERE M.DayOfWeek = ?";
+    connection.query(query, dayOfWeek, function (err, result) {
+      if (err) { console.log(err.message) }
+      if (result !== 0) {
+        let row = [result[0].First, result[0].FirstPrice, result[0].Second, result[0].SecondPrice, result[0].Salad, result[0].SaladPrice, result[0].Liquid, result[0].LiquidPrice];
+        for (let i = 0; i < row.length; i++) {
+          if (row[i] === null) { row[i] = 0; }
+        }
+        if (orderMax.indexOf(orderMax[0]) != -1) { orderMax[0] = row[0]; }
+        if (orderMax.indexOf(orderMax[1]) != -1) { orderMax[1] = row[2]; }
+        if (orderMax.indexOf(orderMax[2]) != -1) { orderMax[2] = row[4]; }
+        if (orderMax.indexOf(orderMax[3]) != -1) { orderMax[3] = row[6]; }
+      }
+    });
     try {
       ctx.reply("Вы уверены? (Да или нет)");
       ctx.scene.next();
     } catch (err) { }
   },
   (ctx) => {
-    console.log(finalOrder);
     let yesOrNo = ctx.message.body;
     if (yesOrNo === "Да" || yesOrNo === "да") {
-      connection.query("SELECT SUM(Price) as Sum FROM Courses WHERE CourseID IN(?)", finalOrder, function (err0, result) {
+      connection.query("SELECT SUM(Price) as Sum FROM Courses WHERE CourseID IN(?,?,?,?)", orderMax, function (err0, result) {
         if (err0) console.log(err0);
         console.log(result);
       });
@@ -75,10 +93,10 @@ const scene = new Scene('order',
       let add = [
         date,
         ctx.message.user_id,
-        finalOrder[0],
-        finalOrder[1],
-        finalOrder[2],
-        finalOrder[3],
+        orderMax[0],
+        orderMax[1],
+        orderMax[2],
+        orderMax[3],
         95,
       ];
 
@@ -90,8 +108,8 @@ const scene = new Scene('order',
       console.log(add);
       connection.query("INSERT INTO Orders(Date, UserID, First, Second, Third, Fourth, TotalPrice) VALUES (?,?,?,?,?,?,?)", add, function (err) {
         if (err) console.log(err);
-        for (let i = 0; i < finalOrder.length; i++) {
-          connection.query("UPDATE Products SET Amount = Amount-100 WHERE ProductID=?", finalOrder[i], function (err1) {
+        for (let i = 0; i < orderMax.length; i++) {
+          connection.query("UPDATE Products SET Amount = Amount-100 WHERE id=?", orderMax[i], function (err1) {
             if (err1) console.log(err1);
           });
         }
