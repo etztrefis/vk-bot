@@ -14,7 +14,7 @@ const bot = new VkBot({
 });
 
 const connection = mysql.createPool({
-  connectionLimit: 3,
+  connectionLimit: 5,
   host: process.env.SERVERNAME,
   user: process.env.USERNAME,
   database: process.env.DBNAME,
@@ -63,9 +63,17 @@ const scene = new Scene('order',
         if (err0) console.log(err0);
         console.log(result);
       });
+      var date;
+      date = new Date();
+      date = date.getUTCFullYear() + '-' +
+        ('00' + (date.getUTCMonth() + 1)).slice(-2) + '-' +
+        ('00' + date.getUTCDate()).slice(-2) + ' ' +
+        ('00' + date.getUTCHours()).slice(-2) + ':' +
+        ('00' + date.getUTCMinutes()).slice(-2) + ':' +
+        ('00' + date.getUTCSeconds()).slice(-2);
+
       let add = [
-        '',
-        now,
+        date,
         ctx.message.user_id,
         finalOrder[0],
         finalOrder[1],
@@ -75,23 +83,19 @@ const scene = new Scene('order',
       ];
 
       for (let i = 0; i < add.length; i++) {
-        if (!add[i]) {
-          add[i] = '';
+        if (add[i] === undefined) {
+          add[i] = 0;
         }
       }
       console.log(add);
-      connection.query("INSERT INTO Orders VALUES ?", add, function (err) {
+      connection.query("INSERT INTO Orders(Date, UserID, First, Second, Third, Fourth, TotalPrice) VALUES (?,?,?,?,?,?,?)", add, function (err) {
         if (err) console.log(err);
-        else {
-          for (let i = 0; i < finalOrder; i++) {
-            connection.query("UPDATE Products SET Amount = Amount-100 WHERE id=?", finalOrder[i], function (err1) {
-              if (err1) console.log(err1);
-              else {
-                ctx.reply("Ваш заказ: " + finalOrder + " добавлен в систему. Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " + mday + "." + month + "." + year + ".");
-              }
-            });
-          }
+        for (let i = 0; i < finalOrder.length; i++) {
+          connection.query("UPDATE Products SET Amount = Amount-100 WHERE ProductID=?", finalOrder[i], function (err1) {
+            if (err1) console.log(err1);
+          });
         }
+        ctx.reply("Ваш заказ: " + finalOrder + " добавлен в систему. Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " + mday + "." + month + "." + year + ".");
       });
     }
     else if (yesOrNo === "Нет" || yesOrNo === "нет") { ctx.reply("Заказ отменен."); ctx.scene.leave(); }
