@@ -14,7 +14,7 @@ const bot = new VkBot({
 });
 
 const connection = mysql.createPool({
-  connectionLimit: 5,
+  connectionLimit: 8,
   host: process.env.SERVERNAME,
   user: process.env.USERNAME,
   database: process.env.DBNAME,
@@ -64,9 +64,13 @@ const scene = new Scene('order',
           if (row[i] === null) { row[i] = 0; }
         }
         if (orderMax.indexOf(orderMax[0]) != -1) { orderMax[0] = row[0]; }
+        else if (orderMax.indexOf(orderMax[0]) == -1) { orderMax[0] = 'null' }
         if (orderMax.indexOf(orderMax[1]) != -1) { orderMax[1] = row[2]; }
+        else if (orderMax.indexOf(orderMax[1]) == -1) { orderMax[1] = 'null' }
         if (orderMax.indexOf(orderMax[2]) != -1) { orderMax[2] = row[4]; }
+        else if (orderMax.indexOf(orderMax[2]) == -1) { orderMax[2] = 'null' }
         if (orderMax.indexOf(orderMax[3]) != -1) { orderMax[3] = row[6]; }
+        else if (orderMax.indexOf(orderMax[3]) == -1) { orderMax[3] = 'null' }
       }
     });
     try {
@@ -79,7 +83,7 @@ const scene = new Scene('order',
     if (yesOrNo === "Да" || yesOrNo === "да") {
       connection.query("SELECT SUM(Price) as Sum FROM Courses WHERE CourseID IN(?,?,?,?)", orderMax, function (err0, result) {
         if (err0) console.log(err0);
-        console.log(result);
+        totalPrice = result;
       });
       var date;
       date = new Date();
@@ -97,11 +101,11 @@ const scene = new Scene('order',
         orderMax[1],
         orderMax[2],
         orderMax[3],
-        95,
+        100,
       ];
 
       for (let i = 0; i < add.length; i++) {
-        if (add[i] === undefined) {
+        if (add[i] == 'null') {
           add[i] = 0;
         }
       }
@@ -109,11 +113,12 @@ const scene = new Scene('order',
       connection.query("INSERT INTO Orders(Date, UserID, First, Second, Third, Fourth, TotalPrice) VALUES (?,?,?,?,?,?,?)", add, function (err) {
         if (err) console.log(err);
         for (let i = 0; i < orderMax.length; i++) {
-          connection.query("UPDATE Products SET Amount = Amount-100 WHERE id=?", orderMax[i], function (err1) {
+          connection.query("UPDATE Products SET Amount = Amount-100 WHERE ProductID=?", orderMax[i], function (err1) {
             if (err1) console.log(err1);
           });
         }
-        ctx.reply("Ваш заказ: " + finalOrder + " добавлен в систему. Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " + mday + "." + month + "." + year + ".");
+        ctx.reply("Ваш заказ: " + finalOrder + " добавлен в систему. Стоимость: " + totalPrice[0].Sum + " рублей. \r\n Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " + mday + "." + month + "." + year + ".");
+        ctx.scene.leave();
       });
     }
     else if (yesOrNo === "Нет" || yesOrNo === "нет") { ctx.reply("Заказ отменен."); ctx.scene.leave(); }
@@ -132,7 +137,15 @@ bot.command('!заказ', (ctx) => {
   connection.query("SELECT * FROM Users WHERE ID = ?", id, function (err, results) {
     if (err) { console.log(err.message); }
     if (results.length != 0) {
-      ctx.scene.enter('order')
+      connection.query("SELECT * FROM Orders WHERE UserID = ?", id, function (err, result) {
+        if (err) { console.log(err.message); }
+        if (result.length == 0) {
+          ctx.scene.enter('order')
+        }
+        else {
+          ctx.reply("Вы уже имеете заказ. Если хотите создать новый - сначала удалите старый или измените его.");
+        }
+      });
     }
     else { ctx.reply("Вы не можете использовать эту команду, так как вас нету в базе предприятия."); }
   });
