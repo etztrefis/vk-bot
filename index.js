@@ -207,6 +207,19 @@ bot.event("message_new", (ctx) => {
         "Начало работы с чат-ботом. \r\n !команды - команды, доступные для использования."
       );
       break;
+    case "!удалить":
+    case "!Удалить":
+      let id = ctx.message.user_id;
+      connection.query("SELECT * FROM Users WHERE ID = ?", id,
+        function (err, results) {
+          if (err) { console.log(err.message); }
+          if (results.length != 0) {
+            
+
+
+          }
+        });
+      break;
     default:
       ctx.reply("Неизвестная команда.");
   }
