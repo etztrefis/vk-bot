@@ -217,17 +217,30 @@ bot.event("message_new", (ctx) => {
           if (results.length != 0) {
             connection.query("SELECT First, Second, Third, Fourth FROM Orders WHERE UserID = ?", userID, function (err1, result) {
               if (err1) { console.log(err1.message); }
-              orderInfo.push(result[0].First, result[0].Second, result[0].Third, result[0].Fourth);
-              /*for (let i = 0; i < orderInfo.length; i++) {
-                connection.query("UPDATE Products SET Amount = Amount+100 WHERE ProductID=?", orderInfo[i], function (err2) {
-                  if (err2) console.log(err2);
+              if (result != 0) {
+                orderInfo.push(result[0].First, result[0].Second, result[0].Third, result[0].Fourth);
+
+                for (let i = 0; i < orderInfo.length; i++) {
+                  connection.query("UPDATE Products SET Amount = Amount+100 WHERE ProductID=?", orderInfo[i], function (err2) {
+                    if (err2) { console.log(err2); }
+                  });
+                }
+                connection.query("DELETE FROM Orders WHERE UserID = ?", userID, function (err3, result2) {
+                  if (err3) { console.log(err3.message); }
+                  if (result2 != 0) {
+                    ctx.reply("Заказ был удален.");
+                  }
+                  else if (result2 == 0) {
+                    ctx.reply("Нету заказа для удаления.");
+                  }
                 });
-              }*/
-              connection.query("DELETE FROM Orders WHERE UserID = ?", userID, function (err3) {
-                if (err3) { console.log(err3.message); }
-                ctx.reply("Заказ был удален.");
-              });
+              }
+              else { ctx.reply("У вас нету заказа для удаления."); }
+
             });
+          }
+          else {
+            ctx.reply("Вы не можете использовать эту команду, так как вас нету в базе предприятия.");
           }
         });
       break;
