@@ -6,3 +6,5 @@ Sun Jun 07 2020 14:05:20 GMT+0200 (Central European Summer Time) message:!зак
 Sun Jun 07 2020 14:05:47 GMT+0200 (Central European Summer Time) message:!заказ id:168743256
 Sun Jun 07 2020 14:06:05 GMT+0200 (Central European Summer Time) message:!заказ id:168743256
 Sun Jun 07 2020 14:06:19 GMT+0200 (Central European Summer Time) message:!заказ id:168743256
+Sun Jun 07 2020 14:14:13 GMT+0200 (Central European Summer Time) message:!команды id:168743256
+Sun Jun 07 2020 14:14:29 GMT+0200 (Central European Summer Time) message:!команды id:168743256

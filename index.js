@@ -14,7 +14,7 @@ const bot = new VkBot({
 });
 
 const connection = mysql.createPool({
-  connectionLimit: 10,
+  connectionLimit: 15,
   host: process.env.SERVERNAME,
   user: process.env.USERNAME,
   database: process.env.DBNAME,
@@ -265,6 +265,14 @@ bot.event("message_new", (ctx) => {
             ctx.reply("У вас нету активных заказов.");
           }
         });
+      break;
+    case "!команды":
+    case "!Команды":
+      ctx.reply("!добавить - диалог добавления нового заказа.\r\n" +
+        "!удалить - удалить созданый ранее заказ.\r\n" +
+        "!заказ - просмотр созданного заказа.\r\n" +
+        "!меню - показ меню на следующий день.\r\n" +
+        "!команды - просмотр доступных команд.\r\n");
       break;
     default:
       ctx.reply("Неизвестная команда.");
