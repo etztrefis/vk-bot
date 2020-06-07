@@ -34,6 +34,7 @@ let finalOrder = [4];
 let totalPrice = [];
 let orderMax = [];
 let orderInfo = [];
+let alreadyOrdered = [];
 
 const scene = new Scene('order',
   (ctx) => {
@@ -133,7 +134,7 @@ bot.use(session.middleware());
 bot.use(stage.middleware());
 //ДОБАВИТЬ ПРОВЕРКИ
 
-bot.command('!заказ', (ctx) => {
+bot.command('!добавить', (ctx) => {
   let id = ctx.message.user_id;
   connection.query("SELECT * FROM Users WHERE ID = ?", id, function (err, results) {
     if (err) { console.log(err.message); }
@@ -241,6 +242,27 @@ bot.event("message_new", (ctx) => {
           }
           else {
             ctx.reply("Вы не можете использовать эту команду, так как вас нету в базе предприятия.");
+          }
+        });
+      break;
+    case "!заказ":
+    case "!Заказ":
+      let IDofUser = ctx.message.user_id;
+      let orderArray = [];
+      connection.query("SELECT O.Date, F.Name as First, S.Name as Second, T.Name as Third, L.Name as Fourth FROM Orders O LEFT OUTER JOIN Courses F ON F.CourseID = O.First LEFT OUTER JOIN Courses S ON S.CourseID = O.Second LEFT OUTER JOIN Courses T ON T.CourseID = O.Third LEFT OUTER JOIN Courses L ON L.CourseID = O.Fourth WHERE O.UserID = ?",
+        IDofUser, function (err, result) {
+          if (err) { console.log(err.message); }
+          if (result != 0) {
+            alreadyOrdered.push(result[0].First, result[0].Second, result[0].Third, result[0].Fourth);
+            for (let i = 0; i < alreadyOrdered.length; i++) {
+              if (alreadyOrdered[i] !== null) {
+                orderArray.push(alreadyOrdered[i]);
+              }
+            }
+            ctx.reply("Ваш заказ: " + orderArray + ".");
+          }
+          else if (result == 0) {
+            ctx.reply("У вас нету активных заказов.");
           }
         });
       break;
