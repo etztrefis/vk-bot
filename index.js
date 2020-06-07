@@ -14,7 +14,7 @@ const bot = new VkBot({
 });
 
 const connection = mysql.createPool({
-  connectionLimit: 8,
+  connectionLimit: 10,
   host: process.env.SERVERNAME,
   user: process.env.USERNAME,
   database: process.env.DBNAME,
@@ -33,6 +33,7 @@ let mainOrder = "";
 let finalOrder = [4];
 let totalPrice = [];
 let orderMax = [];
+let orderInfo = [];
 
 const scene = new Scene('order',
   (ctx) => {
@@ -209,14 +210,24 @@ bot.event("message_new", (ctx) => {
       break;
     case "!удалить":
     case "!Удалить":
-      let id = ctx.message.user_id;
-      connection.query("SELECT * FROM Users WHERE ID = ?", id,
+      let userID = ctx.message.user_id;
+      connection.query("SELECT * FROM Users WHERE ID = ?", userID,
         function (err, results) {
           if (err) { console.log(err.message); }
           if (results.length != 0) {
-            
-
-
+            connection.query("SELECT First, Second, Third, Fourth FROM Orders WHERE UserID = ?", userID, function (err1, result) {
+              if (err1) { console.log(err1.message); }
+              orderInfo.push(result[0].First, result[0].Second, result[0].Third, result[0].Fourth);
+              /*for (let i = 0; i < orderInfo.length; i++) {
+                connection.query("UPDATE Products SET Amount = Amount+100 WHERE ProductID=?", orderInfo[i], function (err2) {
+                  if (err2) console.log(err2);
+                });
+              }*/
+              connection.query("DELETE FROM Orders WHERE UserID = ?", userID, function (err3) {
+                if (err3) { console.log(err3.message); }
+                ctx.reply("Заказ был удален.");
+              });
+            });
           }
         });
       break;
