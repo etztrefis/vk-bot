@@ -185,18 +185,23 @@ bot.event("message_new", (ctx) => {
             let query = "SELECT F.Name as First, M.FirstPrice, S.Name as Second, M.SecondPrice, T.Name as Salad, M.SaladPrice, L.Name as Liquid, M.LiquidPrice FROM Menu M LEFT OUTER JOIN Courses F ON F.CourseID = M.First LEFT OUTER JOIN Courses S ON S.CourseID = M.Second LEFT OUTER JOIN Courses T ON T.CourseID = M.Salad LEFT OUTER JOIN Courses L ON L.CourseID = M.Liquid WHERE M.DayOfWeek = ?";
             connection.query(query, dayOfWeek, function (err, result) {
               if (err) { console.log(err.message) }
-              if (result !== 0) {
-                let row = [result[0].First, result[0].FirstPrice, result[0].Second, result[0].SecondPrice, result[0].Salad, result[0].SaladPrice, result[0].Liquid, result[0].LiquidPrice];
-                for (let i = 0; i < row.length; i++) {
-                  if (row[i] === null) { row[i] = "-"; }
+              try {
+                if (result !== 0) {
+                  let row = [result[0].First, result[0].FirstPrice, result[0].Second, result[0].SecondPrice, result[0].Salad, result[0].SaladPrice, result[0].Liquid, result[0].LiquidPrice];
+                  for (let i = 0; i < row.length; i++) {
+                    if (row[i] === null) { row[i] = "-"; }
+                  }
+                  ctx.reply("Меню на: " + mday + "." + month + "." + year + "\r\n \r\n" +
+                    "1." + row[0] + " " + row[1] + " руб.\r\n" +
+                    "2." + row[2] + " " + row[3] + " руб.\r\n" +
+                    "3." + row[4] + " " + row[5] + " руб.\r\n" +
+                    "4." + row[6] + " " + row[7] + " руб.\r\n");
                 }
-                ctx.reply("Меню на: " + mday + "." + month + "." + year + "\r\n \r\n" +
-                  "1." + row[0] + " " + row[1] + " руб.\r\n" +
-                  "2." + row[2] + " " + row[3] + " руб.\r\n" +
-                  "3." + row[4] + " " + row[5] + " руб.\r\n" +
-                  "4." + row[6] + " " + row[7] + " руб.\r\n");
+              } catch {
+                ctx.reply("Меню за завтра отсутствует в таблице.");
               }
             });
+
           }
           else {
             ctx.reply("Вы не можете использовать эту команду, так как вас нету в базе предприятия.");
