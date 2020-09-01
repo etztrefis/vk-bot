@@ -6,7 +6,7 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "mysql2": "^2.1.0",
-    "node-vk-bot-api": "^3.3.4"
+    "node-vk-bot-api": "^3.3.7"
   },
   "devDependencies": {},
   "scripts": {
