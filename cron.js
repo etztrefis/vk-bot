@@ -56,10 +56,10 @@ connection.query(query, dayOfWeek, function (err, result) {
       }
     }
     let message = `📅 Меню на: ${mday}.${month}.${year}\r\n\r\n
-                    1. ${row[0]} ${row[1]} руб. 
-                    2. ${row[2]} ${row[3]} руб. 
-                    3. ${row[4]} ${row[5]} руб. 
-                    4. ${row[6]} ${row[7]} руб. \r\n`;
+  1. ${row[0]} ${row[1]} руб. 
+  2. ${row[2]} ${row[3]} руб. 
+  3. ${row[4]} ${row[5]} руб. 
+  4. ${row[6]} ${row[7]} руб. \r\n`;
 
     connection.query("SELECT UID FROM Users", function (UIDerror, usersResult) {
       if (UIDerror) {
