@@ -29,8 +29,6 @@ bot.startPolling((err) => {
   console.log("Bot started.");
 });
 
-Markup.keyboard(["one", "two", "three", "four", "five", "six"], { columns: 2 });
-
 let now = new Date();
 let year = now.getFullYear();
 let month = now.getMonth();
@@ -132,20 +130,6 @@ const scene = new Scene(
           totalPrice = result;
         }
       );
-      var date;
-      date = new Date();
-      date =
-        date.getUTCFullYear() +
-        "-" +
-        ("00" + (date.getUTCMonth() + 1)).slice(-2) +
-        "-" +
-        ("00" + date.getUTCDate()).slice(-2) +
-        " " +
-        ("00" + date.getUTCHours()).slice(-2) +
-        ":" +
-        ("00" + date.getUTCMinutes()).slice(-2) +
-        ":" +
-        ("00" + date.getUTCSeconds()).slice(-2);
 
       let add = [
         date,
@@ -241,19 +225,21 @@ bot.command("/добавить", (ctx) => {
   });
 });
 
-bot.event("message_new", (ctx) => {
+bot.event("message_new", async (ctx) => {
   //WRITNIG LOGS IN LOGS.TXT FILE
-  let now = new Date();
-  let info =
-    now +
-    " message:" +
-    ctx.message.body +
-    " id:" +
-    ctx.message.user_id +
-    "\r\n";
-  fs.appendFile("logs.txt", info, function (error) {
-    if (error) throw error;
-  });
+  try {
+    connection.query(
+      "INSERT INTO Messages_Logs(UID, Date, Message) VALUES(?,?,?)",
+      [ctx.message.user_id, setTimeToNormal(), ctx.message.body],
+      function (logError) {
+        if (logError) {
+          console.log(logError.message);
+        }
+      }
+    );
+  } catch (e) {
+    console.error(e);
+  }
 
   //CHECK TO COMMAND
   switch (ctx.message.body) {
@@ -436,3 +422,21 @@ bot.event("message_new", (ctx) => {
       ctx.reply("😯 Неизвестная команда.");
   }
 });
+
+function setTimeToNormal() {
+  var date;
+  date = new Date();
+  date =
+    date.getUTCFullYear() +
+    "-" +
+    ("00" + (date.getUTCMonth() + 1)).slice(-2) +
+    "-" +
+    ("00" + date.getUTCDate()).slice(-2) +
+    " " +
+    ("00" + date.getUTCHours()).slice(-2) +
+    ":" +
+    ("00" + date.getUTCMinutes()).slice(-2) +
+    ":" +
+    ("00" + date.getUTCSeconds()).slice(-2);
+  return date;
+}
