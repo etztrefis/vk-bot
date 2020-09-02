@@ -245,13 +245,12 @@ bot.event("message_new", async (ctx) => {
   switch (ctx.message.body) {
     case "/меню":
     case "/Меню":
-      let id = ctx.message.user_id;
-      connection.query("SELECT * FROM Users WHERE UID = ?", id, function (
+      connection.query("SELECT * FROM Users WHERE UID = ?", ctx.message.user_id, function (
         err,
         results
       ) {
         if (err) {
-          console.log(err.message);
+          console.error(err);
         }
         if (results.length != 0) {
           let now = new Date();
@@ -270,12 +269,12 @@ bot.event("message_new", async (ctx) => {
 
           let query =
             "SELECT F.Name AS First, M.FirstPrice, S.Name AS Second, M.SecondPrice, T.Name AS Salad, M.SaladPrice, L.Name AS Liquid, M.LiquidPrice FROM Menu M LEFT OUTER JOIN Dishes F ON F.DishID = M.First LEFT OUTER JOIN Dishes S ON S.DishID = M.Second LEFT OUTER JOIN Dishes T ON T.DishID = M.Salad LEFT OUTER JOIN Dishes L ON L.DishID = M.Liquid WHERE M.DayOfWeek = ?";
-          connection.query(query, dayOfWeek, function (err, result) {
-            if (err) {
-              console.log(err.message);
+          connection.query(query, dayOfWeek, function (menuError, menuResult) {
+            if (menuError) {
+              console.error(menuError);
             }
             try {
-              if (result !== 0) {
+              if (menuResult !== 0) {
                 let row = [
                   result[0].First,
                   result[0].FirstPrice,
@@ -291,19 +290,20 @@ bot.event("message_new", async (ctx) => {
                     row[i] = "  -  ";
                   }
                 }
-                ctx.reply(`📅 Меню на: ${mday}.${month}.${year}\r\n\r\n
+                await ctx.reply(`📅 Меню на: ${mday}.${month}.${year}\r\n\r\n
   1. ${row[0]} ${row[1]} руб. 
   2. ${row[2]} ${row[3]} руб. 
   3. ${row[4]} ${row[5]} руб. 
   4. ${row[6]} ${row[7]} руб. \r\n`);
               }
-            } catch {
+            } catch (e){
               ctx.reply("Меню за завтра отсутствует в базе данных. 🚫");
+              console.error(e);
             }
           });
         } else {
           ctx.reply(
-            "Вы не можете использовать эту команду, так как вас нету в базе предприятия."
+            "Вы не можете использовать эту команду, так как Вы не зарегестрированны в базе данных предприятия. 🚫"
           );
         }
       });
