@@ -42,11 +42,11 @@ WHERE
   Menu.DayOfWeek = 3 AND
   Dishes.DishID = Menu.DishID
   `;
-  connection.query(query, dayOfWeek, function (err, result) {
-    if (err) {
-      console.log(err.message);
+  connection.query(query, dayOfWeek, function (mainErr, mainResult) {
+    if (mainErr) {
+      console.err(mainErr);
     }
-    if (result !== 0) {
+    if (mainResult !== 0) {
       let row = [
         result[0].Name,
         result[0].Price,
@@ -77,7 +77,7 @@ WHERE
         usersResult
       ) {
         if (UIDerror) {
-          console.log(UIDerror.message);
+          console.error(UIDerror);
         }
         for (let i = 0; i < usersResult.length; i++) {
           bot.sendMessage(usersResult[i].UID, message);
@@ -87,13 +87,16 @@ WHERE
   });
 } catch (e) {
   console.error(e);
-  connection.query("SELECT UID FROM Users", function (UIDerror, usersResult) {
-    if (UIDerror) {
-      console.log(UIDerror.message);
+  connection.query("SELECT UID FROM Users", function (
+    catchUIDerror,
+    catchUsersResult
+  ) {
+    if (catchUIDerror) {
+      console.error(catchUIDerror);
     }
-    for (let i = 0; i < usersResult.length; i++) {
+    for (let i = 0; i < catchUsersResult.length; i++) {
       bot.sendMessage(
-        usersResult[i].UID,
+        catchUsersResult[i].UID,
         "Записей о меню на завтрашний день в базе не найдено. 🚫"
       );
     }

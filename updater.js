@@ -14,7 +14,7 @@ try {
 
   connection.query("SELECT * FROM Orders", function (err, result) {
     if (err) {
-      console.log(err.message);
+      console.error(err);
     }
     for (let i = 0; i < result.length; i++) {
       connection.query(
@@ -22,7 +22,7 @@ try {
         result[i].Date,
         function (logError) {
           if (logError) {
-            console.log(logError.message);
+            console.error(logError);
           }
         }
       );
@@ -34,7 +34,7 @@ try {
     () =>
       connection.query("DELETE FROM Orders", function (delError) {
         if (delError) {
-          console.log(delError.message);
+          console.error(delError);
         }
         console.log("Data has been logged.");
       }),
