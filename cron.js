@@ -39,7 +39,7 @@ FROM
   eaterymain.Menu,
   eaterymain.Dishes
 WHERE
-  Menu.DayOfWeek = 3 AND
+  Menu.DayOfWeek = ? AND
   Dishes.DishID = Menu.DishID
   `;
   connection.query(query, dayOfWeek, function (mainErr, mainResult) {
