@@ -33,40 +33,69 @@ if (hardDays.includes(month)) {
   month = "0" + month;
 }
 
-let query =
-  "SELECT F.Name AS First, M.FirstPrice, S.Name AS Second, M.SecondPrice, T.Name AS Salad, M.SaladPrice, L.Name AS Liquid, M.LiquidPrice FROM Menu M LEFT OUTER JOIN Dishes F ON F.DishID = M.First LEFT OUTER JOIN Dishes S ON S.DishID = M.Second LEFT OUTER JOIN Dishes T ON T.DishID = M.Salad LEFT OUTER JOIN Dishes L ON L.DishID = M.Liquid WHERE M.DayOfWeek = ?";
+let query = `SELECT 
+  Dishes.Name, Dishes.Price, Dishes.EnergyValue
+FROM
+  eaterymain.Menu,
+  eaterymain.Dishes
+WHERE
+  Menu.DayOfWeek = 3 AND
+  Dishes.DishID = Menu.DishID
+  `;
 connection.query(query, dayOfWeek, function (err, result) {
   if (err) {
     console.log(err.message);
   }
-  if (result !== 0) {
-    let row = [
-      result[0].First,
-      result[0].FirstPrice,
-      result[0].Second,
-      result[0].SecondPrice,
-      result[0].Salad,
-      result[0].SaladPrice,
-      result[0].Liquid,
-      result[0].LiquidPrice,
-    ];
-    for (let i = 0; i < row.length; i++) {
-      if (row[i] === null) {
-        row[i] = "  -  ";
+  try {
+    if (result !== 0) {
+      let row = [
+        result[0].Name,
+        result[0].Price,
+        result[0].EnergyValue,
+        result[1].Name,
+        result[1].Price,
+        result[1].EnergyValue,
+        result[2].Name,
+        result[2].Price,
+        result[2].EnergyValue,
+        result[3].Name,
+        result[3].Price,
+        result[3].EnergyValue,
+      ];
+      for (let i = 0; i < row.length; i++) {
+        if (row[i] === null) {
+          row[i] = "  -  ";
+        }
       }
-    }
-    let message = `📅 Меню на: ${mday}.${month}.${year}\r\n\r\n
-  1. ${row[0]} ${row[1]} руб. 
-  2. ${row[2]} ${row[3]} руб. 
-  3. ${row[4]} ${row[5]} руб. 
-  4. ${row[6]} ${row[7]} руб. \r\n`;
+      let message = `📅 Меню на: ${mday}.${month}.${year}\r\n\r\n
+  1. ${row[0]} ${row[1]} руб. | Энерг. ценность: ${row[2]} ккал.
+  2. ${row[3]} ${row[4]} руб. | Энерг. ценность: ${row[5]} ккал. 
+  3. ${row[6]} ${row[7]} руб. | Энерг. ценность: ${row[8]} ккал. 
+  4. ${row[9]} ${row[10]} руб. | Энерг. ценность: ${row[11]} ккал. \r\n`;
 
+      connection.query("SELECT UID FROM Users", function (
+        UIDerror,
+        usersResult
+      ) {
+        if (UIDerror) {
+          console.log(UIDerror.message);
+        }
+        for (let i = 0; i < usersResult.length; i++) {
+          bot.sendMessage(usersResult[i].UID, message);
+        }
+      });
+    }
+  } catch (e) {
+    console.error(e);
     connection.query("SELECT UID FROM Users", function (UIDerror, usersResult) {
       if (UIDerror) {
         console.log(UIDerror.message);
       }
       for (let i = 0; i < usersResult.length; i++) {
-        bot.sendMessage(usersResult[i].UID, message);
+        bot.sendMessage(
+          usersResult[i].UID,
+          "Записей о меню на завтрашний день в базе не найдено. 🚫"
+        );
       }
     });
   }
