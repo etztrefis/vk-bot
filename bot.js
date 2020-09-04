@@ -4,7 +4,6 @@ const Scene = require("node-vk-bot-api/lib/scene");
 const Stage = require("node-vk-bot-api/lib/stage");
 const Session = require("node-vk-bot-api/lib/session");
 const Markup = require("node-vk-bot-api/lib/markup");
-const fs = require("fs");
 const mysql = require("mysql2");
 
 const bot = new VkBot({
@@ -33,30 +32,32 @@ let now = new Date();
 let year = now.getFullYear();
 let month = now.getMonth();
 let mday = now.getDate() + 1;
+let hardDays = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  if (hardDays.includes(mday)) {
+    mday = "0" + mday;
+  }
+  if (hardDays.includes(month)) {
+    month = "0" + month;
+  }
 let mainOrder = "";
 let finalOrder = [4];
 let totalPrice = [];
 let orderMax = [];
 let orderInfo = [];
 let alreadyOrdered = [];
+let price = [];
 
 const scene = new Scene(
   "order",
   (ctx) => {
     ctx.scene.next();
     ctx.reply(
-      "Напишите номера блюд из меню через запятую на: " +
-        mday +
-        "." +
-        month +
-        "." +
-        year +
-        ' Например => "2,3,1". Будьте внимательны к дате. '
+      `Выпишите номера блюд, которые Вы хотите заказать из меню через запятую на: ${mday}.${mounth}.${year} Например => "2,3,1". Будьте внимательны к дате.` 
     );
   },
   (ctx) => {
     mainOrder = ctx.message.body;
-    mainOrder = mainOrder.replace(/\s+/g, "");
+    mainOrder = mainOrder.replace(/[^,0-9]/gim,'');
     finalOrder = mainOrder.split(/,\s*/);
     finalOrder.sort((a, b) => a - b);
     orderMax = finalOrder.slice();
@@ -68,47 +69,48 @@ const scene = new Scene(
         break;
       }
     }
-    let now = new Date();
-    let dayOfWeek = now.getDay() + 1;
-    let query =
-      "SELECT F.CourseID as First, M.FirstPrice, S.CourseID as Second, M.SecondPrice, T.CourseID as Salad, M.SaladPrice, L.CourseID as Liquid, M.LiquidPrice FROM Menu M LEFT OUTER JOIN Courses F ON F.CourseID = M.First LEFT OUTER JOIN Courses S ON S.CourseID = M.Second LEFT OUTER JOIN Courses T ON T.CourseID = M.Salad LEFT OUTER JOIN Courses L ON L.CourseID = M.Liquid WHERE M.DayOfWeek = ?";
-    connection.query(query, dayOfWeek, function (err, result) {
-      if (err) {
-        console.log(err.message);
-      }
-      if (result !== 0) {
+    let query = `SELECT 
+    Dishes.ID, Dishes.Price
+      FROM
+    eaterymain.Menu,
+    eaterymain.Dishes
+      WHERE
+    Menu.DayOfWeek = ? AND
+    Dishes.DishID = Menu.DishID
+  `;
+  connection.query(query, dayOfWeek, function (mainErr, mainResult) {
+    if (mainErr) {
+      console.err(mainErr);
+    }
+      if (mainResult !== 0) {
         let row = [
-          result[0].First,
-          result[0].FirstPrice,
-          result[0].Second,
-          result[0].SecondPrice,
-          result[0].Salad,
-          result[0].SaladPrice,
-          result[0].Liquid,
-          result[0].LiquidPrice,
+          result[0].ID,
+          result[1].ID,
+          result[2].ID,
+          result[3].ID,
         ];
         for (let i = 0; i < row.length; i++) {
           if (row[i] === null) {
             row[i] = 0;
           }
         }
-        if (orderMax.indexOf(orderMax[0]) != -1) {
+        if (orderMax.indexOf(orderMax[0]) != -1) {  // if arra[i] not null = row[i] else null
           orderMax[0] = row[0];
         } else if (orderMax.indexOf(orderMax[0]) == -1) {
           orderMax[0] = "null";
         }
         if (orderMax.indexOf(orderMax[1]) != -1) {
-          orderMax[1] = row[2];
+          orderMax[1] = row[1];
         } else if (orderMax.indexOf(orderMax[1]) == -1) {
           orderMax[1] = "null";
         }
         if (orderMax.indexOf(orderMax[2]) != -1) {
-          orderMax[2] = row[4];
+          orderMax[2] = row[2];
         } else if (orderMax.indexOf(orderMax[2]) == -1) {
           orderMax[2] = "null";
         }
         if (orderMax.indexOf(orderMax[3]) != -1) {
-          orderMax[3] = row[6];
+          orderMax[3] = row[3];
         } else if (orderMax.indexOf(orderMax[3]) == -1) {
           orderMax[3] = "null";
         }
@@ -117,17 +119,23 @@ const scene = new Scene(
     try {
       ctx.reply("Вы уверены? (Да или нет)");
       ctx.scene.next();
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+    }
   },
   (ctx) => {
     let yesOrNo = ctx.message.body;
     if (yesOrNo === "Да" || yesOrNo === "да") {
       connection.query(
-        "SELECT SUM(Price) as Sum FROM Courses WHERE CourseID IN(?,?,?,?)",
-        orderMax,
-        function (err0, result) {
-          if (err0) console.log(err0);
-          totalPrice = result;
+        `SELECT 
+        SUM(Dishes.Price) as Sum
+          FROM
+        eaterymain.Dishes
+          WHERE
+        Dishes.DishID IN (${ordermax})`,
+        function (sumError, sumError) {
+          if (sumError) console.error(sumError);
+          totalPrice = sumError;
         }
       );
 
@@ -147,36 +155,38 @@ const scene = new Scene(
         }
       }
       console.log(add);
+      for(let i = 0; i < orderMax.length; i++){
       connection.query(
-        "INSERT INTO Orders(Date, UserID, First, Second, Third, Fourth, TotalPrice) VALUES (?,?,?,?,?,?,?)",
-        add,
-        function (err) {
-          if (err) console.log(err);
-          for (let i = 0; i < orderMax.length; i++) {
-            connection.query(
+        "INSERT INTO Orders(UserID, DishID, Date) VALUES (?,?,?)",
+        [ctx.message.body, orderMax[i], setTimeToNormal()],
+        function (orderErr) {
+          if (orderErr) console.error(orderErr);
+          connection.query(
               "UPDATE Products SET Amount = Amount-100 WHERE ProductID=?",
               orderMax[i],
               function (err1) {
                 if (err1) console.log(err1);
               }
-            );
-          }
-          ctx.reply(
+          );
+        }
+      ); //NEED TO FINISH 
+      }
+      ctx.reply(
             "Ваш заказ: " +
               finalOrder +
               " добавлен в систему. Стоимость: " +
               totalPrice[0].Sum +
-              " рублей. \r\n Будьте внимательны! Вы можете удалить или изменить свой заказ до 05:00 " +
+              " рублей. \r\n Будьте внимательны! Вы можете удалить до 05:00 следующего дня." +
               mday +
               "." +
               month +
               "." +
               year +
               "."
-          );
-          ctx.scene.leave();
-        }
       );
+      ctx.scene.leave();
+        
+      
     } else if (yesOrNo === "Нет" || yesOrNo === "нет") {
       ctx.reply("Заказ отменен.");
       ctx.scene.leave();
@@ -187,39 +197,38 @@ const scene = new Scene(
 );
 const session = new Session();
 const stage = new Stage(scene);
-
 bot.use(session.middleware());
 bot.use(stage.middleware());
 //ДОБАВИТЬ ПРОВЕРКИ
 
-bot.command("/добавить", (ctx) => {
+bot.command("/добавить", async (ctx) => {
   let id = ctx.message.user_id;
-  connection.query("SELECT * FROM Users WHERE ID = ?", id, function (
-    err,
-    results
+  connection.query("SELECT * FROM Users WHERE UID = ?", id, function (
+    userErr,
+    userResults
   ) {
-    if (err) {
-      console.log(err.message);
+    if (userErr) {
+      console.error(userErr);
     }
-    if (results.length != 0) {
+    if (userResults.length != 0) {
       connection.query("SELECT * FROM Orders WHERE UserID = ?", id, function (
-        err,
-        result
+        orderErr,
+        orderResult
       ) {
-        if (err) {
-          console.log(err.message);
+        if (orderErr) {
+          console.error(orderErr);
         }
-        if (result.length == 0) {
+        if (orderResult.length == 0) {
           ctx.scene.enter("order");
         } else {
-          ctx.reply(
-            "Вы уже имеете заказ. Если хотите создать новый - сначала удалите старый или измените его."
+          await ctx.reply(
+            "Вы уже имеете заказ. Если хотите создать новый - удалите старый. 🚫"
           );
         }
       });
     } else {
-      ctx.reply(
-        "Вы не можете использовать эту команду, так как вас нету в базе предприятия."
+      await ctx.reply(
+        "Вы не можете использовать эту команду, так как Вы не зарегестрированны в базе данных предприятия. 🚫"
       );
     }
   });
@@ -245,68 +254,72 @@ bot.event("message_new", async (ctx) => {
   switch (ctx.message.body) {
     case "/меню":
     case "/Меню":
-      connection.query("SELECT * FROM Users WHERE UID = ?", ctx.message.user_id, function (
-        err,
-        results
-      ) {
-        if (err) {
-          console.error(err);
-        }
-        if (results.length != 0) {
-          let now = new Date();
-          let dayOfWeek = now.getDay() + 1;
-          let year = now.getFullYear();
-          let month = now.getMonth();
-          let mday = now.getDate() + 1;
-
-          let hardDays = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-          if (hardDays.includes(mday)) {
-            mday = "0" + mday;
+      connection.query(
+        "SELECT * FROM Users WHERE UID = ?",
+        ctx.message.user_id,
+        function (err, results) {
+          if (err) {
+            console.error(err);
           }
-          if (hardDays.includes(month)) {
-            month = "0" + month;
-          }
+          if (results.length != 0) {
+            let now = new Date();
+            let dayOfWeek = now.getDay() + 1;
+            let year = now.getFullYear();
+            let month = now.getMonth();
+            let mday = now.getDate() + 1;
 
-          let query =
-            "SELECT F.Name AS First, M.FirstPrice, S.Name AS Second, M.SecondPrice, T.Name AS Salad, M.SaladPrice, L.Name AS Liquid, M.LiquidPrice FROM Menu M LEFT OUTER JOIN Dishes F ON F.DishID = M.First LEFT OUTER JOIN Dishes S ON S.DishID = M.Second LEFT OUTER JOIN Dishes T ON T.DishID = M.Salad LEFT OUTER JOIN Dishes L ON L.DishID = M.Liquid WHERE M.DayOfWeek = ?";
-          connection.query(query, dayOfWeek, function (menuError, menuResult) {
-            if (menuError) {
-              console.error(menuError);
+            let hardDays = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            if (hardDays.includes(mday)) {
+              mday = "0" + mday;
             }
-            try {
-              if (menuResult !== 0) {
-                let row = [
-                  result[0].First,
-                  result[0].FirstPrice,
-                  result[0].Second,
-                  result[0].SecondPrice,
-                  result[0].Salad,
-                  result[0].SaladPrice,
-                  result[0].Liquid,
-                  result[0].LiquidPrice,
-                ];
-                for (let i = 0; i < row.length; i++) {
-                  if (row[i] === null) {
-                    row[i] = "  -  ";
+            if (hardDays.includes(month)) {
+              month = "0" + month;
+            }
+
+            let query =
+              "SELECT F.Name AS First, M.FirstPrice, S.Name AS Second, M.SecondPrice, T.Name AS Salad, M.SaladPrice, L.Name AS Liquid, M.LiquidPrice FROM Menu M LEFT OUTER JOIN Dishes F ON F.DishID = M.First LEFT OUTER JOIN Dishes S ON S.DishID = M.Second LEFT OUTER JOIN Dishes T ON T.DishID = M.Salad LEFT OUTER JOIN Dishes L ON L.DishID = M.Liquid WHERE M.DayOfWeek = ?";
+            connection.query(query, dayOfWeek, function (
+              menuError,
+              menuResult
+            ) {
+              if (menuError) {
+                console.error(menuError);
+              }
+              try {
+                if (menuResult !== 0) {
+                  let row = [
+                    result[0].First,
+                    result[0].FirstPrice,
+                    result[0].Second,
+                    result[0].SecondPrice,
+                    result[0].Salad,
+                    result[0].SaladPrice,
+                    result[0].Liquid,
+                    result[0].LiquidPrice,
+                  ];
+                  for (let i = 0; i < row.length; i++) {
+                    if (row[i] === null) {
+                      row[i] = "  -  ";
+                    }
                   }
-                }
-                await ctx.reply(`📅 Меню на: ${mday}.${month}.${year}\r\n\r\n
+                  ctx.reply(`📅 Меню на: ${mday}.${month}.${year}\r\n\r\n
   1. ${row[0]} ${row[1]} руб. 
   2. ${row[2]} ${row[3]} руб. 
   3. ${row[4]} ${row[5]} руб. 
   4. ${row[6]} ${row[7]} руб. \r\n`);
+                }
+              } catch (e) {
+                ctx.reply("Меню за завтра отсутствует в базе данных. 🚫");
+                console.error(e);
               }
-            } catch (e){
-              ctx.reply("Меню за завтра отсутствует в базе данных. 🚫");
-              console.error(e);
-            }
-          });
-        } else {
-          ctx.reply(
-            "Вы не можете использовать эту команду, так как Вы не зарегестрированны в базе данных предприятия. 🚫"
-          );
+            });
+          } else {
+            ctx.reply(
+              "Вы не можете использовать эту команду, так как Вы не зарегестрированны в базе данных предприятия. 🚫"
+            );
+          }
         }
-      });
+      );
       break;
     case "start":
     case "Start":
