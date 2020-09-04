@@ -18,7 +18,7 @@ connection.query("SELECT * FROM Orders", function (err, result) {
   }
   for (let i = 0; i < result.length; i++) {
     connection.query(
-      `INSERT INTO Orders_Logs(Date, UserID, Dish, Price) VALUES (?, ${result[i].UserID}, ${result[i].Dish}, ${result[i].Price})`,
+      `INSERT INTO Orders_Logs(Date, UserID, DishID, Price) VALUES (?, ${result[i].UserID}, ${result[i].DishID}, ${result[i].Price})`,
       result[i].Date,
       function (logError) {
         if (logError) {
