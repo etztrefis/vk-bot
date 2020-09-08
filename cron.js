@@ -35,31 +35,31 @@ try {
 
   let query = `SELECT 
   Dishes.Name, Dishes.Price, Dishes.EnergyValue
-FROM
+      FROM
   eaterymain.Menu,
   eaterymain.Dishes
-WHERE
+      WHERE
   Menu.DayOfWeek = ? AND
   Dishes.DishID = Menu.DishID
   `;
   connection.query(query, dayOfWeek, function (mainErr, mainResult) {
     if (mainErr) {
-      console.err(mainErr);
+      console.error(mainErr);
     }
     if (mainResult !== 0) {
       let row = [
-        result[0].Name,
-        result[0].Price,
-        result[0].EnergyValue,
-        result[1].Name,
-        result[1].Price,
-        result[1].EnergyValue,
-        result[2].Name,
-        result[2].Price,
-        result[2].EnergyValue,
-        result[3].Name,
-        result[3].Price,
-        result[3].EnergyValue,
+        mainResult[0].Name,
+        mainResult[0].Price,
+        mainResult[0].EnergyValue,
+        mainResult[1].Name,
+        mainResult[1].Price,
+        mainResult[1].EnergyValue,
+        mainResult[2].Name,
+        mainResult[2].Price,
+        mainResult[2].EnergyValue,
+        mainResult[3].Name,
+        mainResult[3].Price,
+        mainResult[3].EnergyValue,
       ];
       for (let i = 0; i < row.length; i++) {
         if (row[i] === null) {
