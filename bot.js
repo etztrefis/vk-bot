@@ -46,6 +46,7 @@ let orderMax = [];
 let orderInfo = [];
 let alreadyOrdered = [];
 let price = [];
+let productsResult;
 
 const scene = new Scene(
   "order",
@@ -162,27 +163,78 @@ const scene = new Scene(
         function (orderErr) {
           if (orderErr) console.error(orderErr);
           connection.query(
-              "UPDATE Products SET Amount = Amount-100 WHERE ProductID=?",
-              orderMax[i],
-              function (err1) {
-                if (err1) console.log(err1);
-              }
+            `SELECT 
+            AmountProduct, ProductID
+          FROM
+            eaterymain.Compositions,
+            eaterymain.Orders
+          WHERE
+            Compositions.DishID = Orders.DishID AND
+            UserID = $`,
+            function (err, result) {
+              if (err) console.error(err);
+              productsResult = result;
+            }
           );
+          setTimeout(() => {
+            connection.getConnection(function (err, conn) {
+              if (err) console.log(err);
+          
+              conn.beginTransaction(function (err) {
+                if (err) {
+                  conn.rollback(function () {
+                    conn.release();
+                    console.log(`1: ${err}`);
+                  });
+                }
+                for (let i = 0; i < productsResult.length; i++) {
+                  conn.query(
+                    `UPDATE Products SET Products.Amount = Products.Amount - ${productsResult[i].AmountProduct} WHERE Products.ProductID = ${productsResult[i].ProductID};`,
+                    function (err) {
+                      if (err) {
+                        conn.rollback(function () {
+                          console.error(err);
+                        });
+                      } else {
+                        console.log("updated.");
+                      }
+                    }
+                  );
+                }
+                conn.query(
+                  "SELECT COUNT(*) AS Less FROM eaterymain.Products WHERE Amount < 0;",
+                  function (err, result) {
+                    if (err) {
+                      conn.rollback(function () {
+                        console.error(err);
+                      });
+                    }
+                    if (result[0].Less > 0) {
+                      conn.rollback(function () {
+                        console.log("Final rollback.");
+                        ctx.reply("На складе недостаточно продуктов для оформления данного заказа. 🚫");
+                      });
+                    } else {
+                      conn.commit(function (err) {
+                        if (err) {
+                          conn.rollback(function () {
+                            console.error(err);
+                          });
+                        }
+                        console.log("Success");
+                      });
+                    }
+                  }
+                );
+              });
+            });
+          }, 2000);
+          
         }
-      ); //NEED TO FINISH 
+      ); 
       }
       ctx.reply(
-            "Ваш заказ: " +
-              finalOrder +
-              " добавлен в систему. Стоимость: " +
-              totalPrice[0].Sum +
-              " рублей. \r\n Будьте внимательны! Вы можете удалить до 05:00 следующего дня." +
-              mday +
-              "." +
-              month +
-              "." +
-              year +
-              "."
+            `Ваш заказ: ${finalOrder} добавлен в систему. Стоимость: ${totalPrice[0].Sum} рублей. \r\n Будьте внимательны! Вы можете удалить до 05:00. ${mday}.${mounth}.${year}.` 
       );
       ctx.scene.leave();
         
