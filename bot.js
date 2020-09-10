@@ -30,15 +30,16 @@ bot.startPolling((err) => {
 
 let now = new Date();
 let year = now.getFullYear();
+let dayOfWeek = now.getDay();
 let month = now.getMonth();
 let mday = now.getDate() + 1;
 let hardDays = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-  if (hardDays.includes(mday)) {
-    mday = "0" + mday;
-  }
-  if (hardDays.includes(month)) {
-    month = "0" + month;
-  }
+if (hardDays.includes(mday)) {
+  mday = "0" + mday;
+}
+if (hardDays.includes(month)) {
+  month = "0" + month;
+}
 let mainOrder = "";
 let finalOrder = [4];
 let totalPrice = [];
@@ -53,12 +54,12 @@ const scene = new Scene(
   (ctx) => {
     ctx.scene.next();
     ctx.reply(
-      `Выпишите номера блюд, которые Вы хотите заказать из меню через запятую на: ${mday}.${mounth}.${year} Например => "2,3,1". Будьте внимательны к дате.` 
+      `Выпишите номера блюд, которые Вы хотите заказать из меню через запятую на: ${mday}.${month}.${year} Например => "2,3,1". Будьте внимательны к дате.`
     );
   },
   (ctx) => {
     mainOrder = ctx.message.body;
-    mainOrder = mainOrder.replace(/[^,0-9]/gim,'');
+    mainOrder = mainOrder.replace(/[^,0-9]/gim, "");
     finalOrder = mainOrder.split(/,\s*/);
     finalOrder.sort((a, b) => a - b);
     orderMax = finalOrder.slice();
@@ -71,7 +72,7 @@ const scene = new Scene(
       }
     }
     let query = `SELECT 
-    Dishes.ID, Dishes.Price
+    Dishes.DishID, Dishes.Price
       FROM
     eaterymain.Menu,
     eaterymain.Dishes
@@ -79,23 +80,24 @@ const scene = new Scene(
     Menu.DayOfWeek = ? AND
     Dishes.DishID = Menu.DishID
   `;
-  connection.query(query, dayOfWeek, function (mainErr, mainResult) {
-    if (mainErr) {
-      console.err(mainErr);
-    }
+    connection.query(query, dayOfWeek, function (mainErr, mainResult) {
+      if (mainErr) {
+        console.error(mainErr);
+      }
       if (mainResult !== 0) {
         let row = [
-          result[0].ID,
-          result[1].ID,
-          result[2].ID,
-          result[3].ID,
+          mainResult[0].DishID,
+          mainResult[1].DishID,
+          mainResult[2].DishID,
+          mainResult[3].DishID,
         ];
         for (let i = 0; i < row.length; i++) {
           if (row[i] === null) {
             row[i] = 0;
           }
         }
-        if (orderMax.indexOf(orderMax[0]) != -1) {  // if arra[i] not null = row[i] else null
+        if (orderMax.indexOf(orderMax[0]) != -1) {
+          // if array[i] not null = row[i] else null
           orderMax[0] = row[0];
         } else if (orderMax.indexOf(orderMax[0]) == -1) {
           orderMax[0] = "null";
@@ -133,112 +135,95 @@ const scene = new Scene(
           FROM
         eaterymain.Dishes
           WHERE
-        Dishes.DishID IN (${ordermax})`,
+        Dishes.DishID IN (${orderMax})`,
         function (sumError, sumError) {
           if (sumError) console.error(sumError);
           totalPrice = sumError;
         }
       );
-
-      let add = [
-        date,
-        ctx.message.user_id,
-        orderMax[0],
-        orderMax[1],
-        orderMax[2],
-        orderMax[3],
-        100,
-      ];
-
-      for (let i = 0; i < add.length; i++) {
-        if (add[i] == "null") {
-          add[i] = 0;
-        }
-      }
-      console.log(add);
-      for(let i = 0; i < orderMax.length; i++){
-      connection.query(
-        "INSERT INTO Orders(UserID, DishID, Date) VALUES (?,?,?)",
-        [ctx.message.body, orderMax[i], setTimeToNormal()],
-        function (orderErr) {
-          if (orderErr) console.error(orderErr);
-          connection.query(
-            `SELECT 
+      for (let i = 0; i < orderMax.length; i++) {
+        connection.query(
+          "INSERT INTO Orders(UserID, DishID, Date) VALUES (?,?,?)",
+          [ctx.message.body, orderMax[i], setTimeToNormal()],
+          function (orderErr) {
+            if (orderErr) console.error(orderErr);
+            connection.query(
+              `SELECT 
             AmountProduct, ProductID
           FROM
             eaterymain.Compositions,
             eaterymain.Orders
           WHERE
             Compositions.DishID = Orders.DishID AND
-            UserID = $`,
-            function (err, result) {
-              if (err) console.error(err);
-              productsResult = result;
-            }
-          );
-          setTimeout(() => {
-            connection.getConnection(function (err, conn) {
-              if (err) console.log(err);
-          
-              conn.beginTransaction(function (err) {
-                if (err) {
-                  conn.rollback(function () {
-                    conn.release();
-                    console.log(`1: ${err}`);
-                  });
-                }
-                for (let i = 0; i < productsResult.length; i++) {
-                  conn.query(
-                    `UPDATE Products SET Products.Amount = Products.Amount - ${productsResult[i].AmountProduct} WHERE Products.ProductID = ${productsResult[i].ProductID};`,
-                    function (err) {
-                      if (err) {
-                        conn.rollback(function () {
-                          console.error(err);
-                        });
-                      } else {
-                        console.log("updated.");
-                      }
-                    }
-                  );
-                }
-                conn.query(
-                  "SELECT COUNT(*) AS Less FROM eaterymain.Products WHERE Amount < 0;",
-                  function (err, result) {
-                    if (err) {
-                      conn.rollback(function () {
-                        console.error(err);
-                      });
-                    }
-                    if (result[0].Less > 0) {
-                      conn.rollback(function () {
-                        console.log("Final rollback.");
-                        ctx.reply("На складе недостаточно продуктов для оформления данного заказа. 🚫");
-                      });
-                    } else {
-                      conn.commit(function (err) {
+            UserID = ?`,
+              ctx.message.user_id,
+              function (err, result) {
+                if (err) console.error(err);
+                productsResult = result;
+              }
+            );
+            setTimeout(() => {
+              connection.getConnection(function (err, conn) {
+                if (err) console.log(err);
+
+                conn.beginTransaction(function (err) {
+                  if (err) {
+                    conn.rollback(function () {
+                      conn.release();
+                      console.log(`1: ${err}`);
+                    });
+                  }
+                  for (let i = 0; i < productsResult.length; i++) {
+                    conn.query(
+                      `UPDATE Products SET Products.Amount = Products.Amount - ${productsResult[i].AmountProduct} WHERE Products.ProductID = ${productsResult[i].ProductID};`,
+                      function (err) {
                         if (err) {
                           conn.rollback(function () {
                             console.error(err);
                           });
+                        } else {
+                          console.log("updated.");
                         }
-                        console.log("Success");
-                      });
-                    }
+                      }
+                    );
                   }
-                );
+                  conn.query(
+                    "SELECT COUNT(*) AS Less FROM eaterymain.Products WHERE Amount < 0;",
+                    function (err, result) {
+                      if (err) {
+                        conn.rollback(function () {
+                          console.error(err);
+                        });
+                      }
+                      if (result[0].Less > 0) {
+                        conn.rollback(function () {
+                          console.log("Final rollback.");
+                          ctx.reply(
+                            "На складе недостаточно продуктов для оформления данного заказа. 🚫"
+                          );
+                        });
+                      } else {
+                        conn.commit(function (err) {
+                          if (err) {
+                            conn.rollback(function () {
+                              console.error(err);
+                            });
+                          }
+                          console.log("Success");
+                        });
+                      }
+                    }
+                  );
+                });
               });
-            });
-          }, 2000);
-          
-        }
-      ); 
+            }, 2000);
+          }
+        );
       }
       ctx.reply(
-            `Ваш заказ: ${finalOrder} добавлен в систему. Стоимость: ${totalPrice[0].Sum} рублей. \r\n Будьте внимательны! Вы можете удалить до 05:00. ${mday}.${mounth}.${year}.` 
+        `Ваш заказ: ${finalOrder} добавлен в систему. Стоимость: ${totalPrice[0].Sum} рублей. \r\n Будьте внимательны! Вы можете удалить до 05:00. ${mday}.${mounth}.${year}.`
       );
       ctx.scene.leave();
-        
-      
     } else if (yesOrNo === "Нет" || yesOrNo === "нет") {
       ctx.reply("Заказ отменен.");
       ctx.scene.leave();
@@ -273,13 +258,13 @@ bot.command("/добавить", async (ctx) => {
         if (orderResult.length == 0) {
           ctx.scene.enter("order");
         } else {
-          await ctx.reply(
+          ctx.reply(
             "Вы уже имеете заказ. Если хотите создать новый - удалите старый. 🚫"
           );
         }
       });
     } else {
-      await ctx.reply(
+      ctx.reply(
         "Вы не можете использовать эту команду, так как Вы не зарегестрированны в базе данных предприятия. 🚫"
       );
     }
