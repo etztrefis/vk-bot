@@ -300,51 +300,69 @@ bot.event("message_new", async (ctx) => {
             console.error(err);
           }
           if (results.length != 0) {
-            let now = new Date();
-            let dayOfWeek = now.getDay() + 1;
-            let year = now.getFullYear();
-            let month = now.getMonth();
-            let mday = now.getDate() + 1;
-
-            let hardDays = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-            if (hardDays.includes(mday)) {
-              mday = "0" + mday;
-            }
-            if (hardDays.includes(month)) {
-              month = "0" + month;
-            }
-
-            let query =
-              "SELECT F.Name AS First, M.FirstPrice, S.Name AS Second, M.SecondPrice, T.Name AS Salad, M.SaladPrice, L.Name AS Liquid, M.LiquidPrice FROM Menu M LEFT OUTER JOIN Dishes F ON F.DishID = M.First LEFT OUTER JOIN Dishes S ON S.DishID = M.Second LEFT OUTER JOIN Dishes T ON T.DishID = M.Salad LEFT OUTER JOIN Dishes L ON L.DishID = M.Liquid WHERE M.DayOfWeek = ?";
-            connection.query(query, dayOfWeek, function (
-              menuError,
-              menuResult
-            ) {
-              if (menuError) {
-                console.error(menuError);
+            let query = `SELECT 
+              Dishes.Name, Dishes.Price, Dishes.EnergyValue
+                FROM
+              eaterymain.Menu,
+              eaterymain.Dishes
+                WHERE
+              Menu.DayOfWeek = ? AND
+              Dishes.DishID = Menu.DishID`;
+            connection.query(query, dayOfWeek, function (mainErr, mainResult) {
+              if (mainErr) {
+                console.error(mainErr);
+                connection.query("SELECT UID FROM Users", function (
+                  catchUIDerror,
+                  catchUsersResult
+                ) {
+                  if (catchUIDerror) {
+                    console.error(catchUIDerror);
+                  }
+                  for (let i = 0; i < catchUsersResult.length; i++) {
+                    bot.sendMessage(
+                      catchUsersResult[i].UID,
+                      "Записей о меню на завтрашний день в базе не найдено. 🚫"
+                    );
+                  }
+                });
               }
               try {
-                if (menuResult !== 0) {
+                if (mainResult !== 0) {
                   let row = [
-                    result[0].First,
-                    result[0].FirstPrice,
-                    result[0].Second,
-                    result[0].SecondPrice,
-                    result[0].Salad,
-                    result[0].SaladPrice,
-                    result[0].Liquid,
-                    result[0].LiquidPrice,
+                    mainResult[0].Name,
+                    mainResult[0].Price,
+                    mainResult[0].EnergyValue,
+                    mainResult[1].Name,
+                    mainResult[1].Price,
+                    mainResult[1].EnergyValue,
+                    mainResult[2].Name,
+                    mainResult[2].Price,
+                    mainResult[2].EnergyValue,
+                    mainResult[3].Name,
+                    mainResult[3].Price,
+                    mainResult[3].EnergyValue,
                   ];
                   for (let i = 0; i < row.length; i++) {
                     if (row[i] === null) {
                       row[i] = "  -  ";
                     }
                   }
-                  ctx.reply(`📅 Меню на: ${mday}.${month}.${year}\r\n\r\n
-  1. ${row[0]} ${row[1]} руб. 
-  2. ${row[2]} ${row[3]} руб. 
-  3. ${row[4]} ${row[5]} руб. 
-  4. ${row[6]} ${row[7]} руб. \r\n`);
+                  let message = `📅 Меню на: ${mday}.${month}.${year}\r\n\r\n
+              1. ${row[0]} ${row[1]} руб. | Энерг. ценность: ${row[2]} ккал.
+              2. ${row[3]} ${row[4]} руб. | Энерг. ценность: ${row[5]} ккал. 
+              3. ${row[6]} ${row[7]} руб. | Энерг. ценность: ${row[8]} ккал. 
+              4. ${row[9]} ${row[10]} руб. | Энерг. ценность: ${row[11]} ккал. \r\n`;
+                  connection.query("SELECT UID FROM Users", function (
+                    UIDerror,
+                    usersResult
+                  ) {
+                    if (UIDerror) {
+                      console.error(UIDerror);
+                    }
+                    for (let i = 0; i < usersResult.length; i++) {
+                      bot.sendMessage(usersResult[i].UID, message);
+                    }
+                  });
                 }
               } catch (e) {
                 ctx.reply("Меню за завтра отсутствует в базе данных. 🚫");
