@@ -54,7 +54,7 @@ const scene = new Scene(
   (ctx) => {
     ctx.scene.next();
     ctx.reply(
-      `Выпишите номера блюд, которые Вы хотите заказать из меню через запятую на: ${mday}.${month}.${year} Например => "2,3,1". Будьте внимательны к дате.`
+      `Выпишите номера блюд, которые Вы хотите заказать из меню через запятую на: ${mday}.${month}.${year} \r\n Например => "2,3,1". Будьте внимательны к дате.`
     );
   },
   (ctx) => {
@@ -136,19 +136,22 @@ const scene = new Scene(
         eaterymain.Dishes
           WHERE
         Dishes.DishID IN (${orderMax})`,
-        function (sumError, sumError) {
+        function (sumError, sumResult) {
           if (sumError) console.error(sumError);
-          totalPrice = sumError;
+          totalPrice = sumResult;
         }
       );
       for (let i = 0; i < orderMax.length; i++) {
         connection.query(
           "INSERT INTO Orders(UserID, DishID, Date) VALUES (?,?,?)",
-          [ctx.message.body, orderMax[i], setTimeToNormal()],
+          [ctx.message.user_id, orderMax[i], setTimeToNormal()],
           function (orderErr) {
             if (orderErr) console.error(orderErr);
-            connection.query(
-              `SELECT 
+          }
+        );
+      }
+      connection.query(
+        `SELECT 
             AmountProduct, ProductID
           FROM
             eaterymain.Compositions,
@@ -156,73 +159,71 @@ const scene = new Scene(
           WHERE
             Compositions.DishID = Orders.DishID AND
             UserID = ?`,
-              ctx.message.user_id,
-              function (err, result) {
-                if (err) console.error(err);
-                productsResult = result;
-              }
-            );
-            setTimeout(() => {
-              connection.getConnection(function (err, conn) {
-                if (err) console.log(err);
+        ctx.message.user_id,
+        function (err, result) {
+          if (err) console.error(err);
+          productsResult = result;
+        }
+      );
+      setTimeout(() => {
+        connection.getConnection(function (err, conn) {
+          if (err) console.log(err);
 
-                conn.beginTransaction(function (err) {
+          conn.beginTransaction(function (err) {
+            if (err) {
+              conn.rollback(function () {
+                conn.release();
+                console.log(`1: ${err}`);
+              });
+            }
+            for (let i = 0; i < productsResult.length; i++) {
+              conn.query(
+                `UPDATE Products SET Products.Amount = Products.Amount - ${productsResult[i].AmountProduct} WHERE Products.ProductID = ${productsResult[i].ProductID};`,
+                function (err) {
                   if (err) {
                     conn.rollback(function () {
-                      conn.release();
-                      console.log(`1: ${err}`);
+                      console.error(err);
                     });
+                  } else {
+                    console.log("updated.");
                   }
-                  for (let i = 0; i < productsResult.length; i++) {
-                    conn.query(
-                      `UPDATE Products SET Products.Amount = Products.Amount - ${productsResult[i].AmountProduct} WHERE Products.ProductID = ${productsResult[i].ProductID};`,
-                      function (err) {
-                        if (err) {
-                          conn.rollback(function () {
-                            console.error(err);
-                          });
-                        } else {
-                          console.log("updated.");
-                        }
-                      }
+                }
+              );
+            }
+            conn.query(
+              "SELECT COUNT(*) AS Less FROM eaterymain.Products WHERE Amount < 0;",
+              function (err, result) {
+                if (err) {
+                  conn.rollback(function () {
+                    console.error(err);
+                  });
+                }
+                if (result[0].Less > 0) {
+                  conn.rollback(function () {
+                    console.log("Final rollback.");
+                    ctx.reply(
+                      "На складе недостаточно продуктов для оформления данного заказа. 🚫"
                     );
-                  }
-                  conn.query(
-                    "SELECT COUNT(*) AS Less FROM eaterymain.Products WHERE Amount < 0;",
-                    function (err, result) {
-                      if (err) {
-                        conn.rollback(function () {
-                          console.error(err);
-                        });
-                      }
-                      if (result[0].Less > 0) {
-                        conn.rollback(function () {
-                          console.log("Final rollback.");
-                          ctx.reply(
-                            "На складе недостаточно продуктов для оформления данного заказа. 🚫"
-                          );
-                        });
-                      } else {
-                        conn.commit(function (err) {
-                          if (err) {
-                            conn.rollback(function () {
-                              console.error(err);
-                            });
-                          }
-                          console.log("Success");
-                        });
-                      }
+                  });
+                } else {
+                  conn.commit(function (err) {
+                    if (err) {
+                      conn.rollback(function () {
+                        console.error(err);
+                      });
                     }
-                  );
-                });
-              });
-            }, 2000);
-          }
-        );
-      }
-      ctx.reply(
-        `Ваш заказ: ${finalOrder} добавлен в систему. Стоимость: ${totalPrice[0].Sum} рублей. \r\n Будьте внимательны! Вы можете удалить до 05:00. ${mday}.${mounth}.${year}.`
-      );
+                    ctx.reply(
+                      `Ваш заказ: ${finalOrder} добавлен в систему. Стоимость: ${totalPrice[0].Sum} рублей. \r\n Будьте внимательны! Вы можете удалить до 05:00. ${mday}.${month}.${year}.`
+                    );
+                    console.log("Success");
+                  });
+                }
+              }
+            );
+          });
+        });
+      }, 2000);
+
       ctx.scene.leave();
     } else if (yesOrNo === "Нет" || yesOrNo === "нет") {
       ctx.reply("Заказ отменен.");
