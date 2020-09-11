@@ -1,6 +1,7 @@
 require("dotenv").config();
 const VkBot = require("node-vk-bot-api");
 const mysql = require("mysql2");
+const ConnectionConfig = require("mysql2/lib/connection_config");
 
 const bot = new VkBot({
   token: process.env.TOKEN,
@@ -32,7 +33,6 @@ try {
   if (hardDays.includes(month)) {
     month = "0" + month;
   }
-
   let query = `SELECT 
   Dishes.Name, Dishes.Price, Dishes.EnergyValue
       FROM
@@ -46,7 +46,7 @@ try {
     if (mainErr) {
       console.error(mainErr);
     }
-    if (mainResult !== 0) {
+    if (mainResult[0] != undefined) {
       let row = [
         mainResult[0].Name,
         mainResult[0].Price,
@@ -81,6 +81,21 @@ try {
         }
         for (let i = 0; i < usersResult.length; i++) {
           bot.sendMessage(usersResult[i].UID, message);
+        }
+      });
+    } else {
+      connection.query("SELECT UID FROM Users", function (
+        catchUIDerror,
+        catchUsersResult
+      ) {
+        if (catchUIDerror) {
+          console.error(catchUIDerror);
+        }
+        for (let i = 0; i < catchUsersResult.length; i++) {
+          bot.sendMessage(
+            catchUsersResult[i].UID,
+            "Записей о меню на завтрашний день в базе не найдено. 🚫"
+          );
         }
       });
     }
