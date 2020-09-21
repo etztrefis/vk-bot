@@ -237,43 +237,53 @@ const session = new Session();
 const stage = new Stage(scene);
 bot.use(session.middleware());
 bot.use(stage.middleware());
-//ДОБАВИТЬ ПРОВЕРКИ
 
 bot.command("/добавить", async (ctx) => {
   let id = ctx.message.user_id;
-  connection.query("SELECT * FROM Users WHERE UID = ?", id, function (
-    userErr,
-    userResults
-  ) {
-    if (userErr) {
-      console.error(userErr);
+  connection.query(
+    "SELECT * FROM eaterymain.Menu WHERE DayOfWeek =?",
+    dayOfWeek,
+    function (menuError, menuResult) {
+      if (menuError) console.error(menuError);
+      if (menuResult[0].DishID == 0) {
+        ctx.reply("Невозможно оформить заказ на завтра.");
+      } else {
+        connection.query("SELECT * FROM Users WHERE UID = ?", id, function (
+          userErr,
+          userResults
+        ) {
+          if (userErr) {
+            console.error(userErr);
+          }
+          if (userResults.length != 0) {
+            connection.query(
+              "SELECT * FROM Orders WHERE UserID = ?",
+              id,
+              function (orderErr, orderResult) {
+                if (orderErr) {
+                  console.error(orderErr);
+                }
+                if (orderResult.length == 0) {
+                  ctx.scene.enter("order");
+                } else {
+                  ctx.reply(
+                    "Вы уже имеете заказ. Если хотите создать новый - удалите старый. 🚫"
+                  );
+                }
+              }
+            );
+          } else {
+            ctx.reply(
+              "Вы не можете использовать эту команду, так как Вы не зарегестрированны в базе данных предприятия. 🚫"
+            );
+          }
+        });
+      }
     }
-    if (userResults.length != 0) {
-      connection.query("SELECT * FROM Orders WHERE UserID = ?", id, function (
-        orderErr,
-        orderResult
-      ) {
-        if (orderErr) {
-          console.error(orderErr);
-        }
-        if (orderResult.length == 0) {
-          ctx.scene.enter("order");
-        } else {
-          ctx.reply(
-            "Вы уже имеете заказ. Если хотите создать новый - удалите старый. 🚫"
-          );
-        }
-      });
-    } else {
-      ctx.reply(
-        "Вы не можете использовать эту команду, так как Вы не зарегестрированны в базе данных предприятия. 🚫"
-      );
-    }
-  });
+  );
 });
 
 bot.event("message_new", async (ctx) => {
-  //WRITNIG LOGS IN LOGS.TXT FILE
   try {
     connection.query(
       "INSERT INTO Messages_Logs(UID, Date, Message) VALUES(?,?,?)",
@@ -386,7 +396,7 @@ bot.event("message_new", async (ctx) => {
     case "/удалить":
     case "/Удалить":
       let userID = ctx.message.user_id;
-      connection.query("SELECT * FROM Users WHERE ID = ?", userID, function (
+      connection.query("SELECT * FROM Users WHERE UID = ?", userID, function (
         err,
         results
       ) {
