@@ -3,7 +3,7 @@ const VkBot = require("node-vk-bot-api");
 const Scene = require("node-vk-bot-api/lib/scene");
 const Stage = require("node-vk-bot-api/lib/stage");
 const Session = require("node-vk-bot-api/lib/session");
-const { Sequelize, QueryTypes, NUMBER } = require("sequelize");
+const { Sequelize, QueryTypes, NUMBER, or } = require("sequelize");
 const mysql = require("mysql2");
 
 const bot = new VkBot({
@@ -76,7 +76,7 @@ const connection = mysql.createPool({
 			finalOrder.sort((a, b) => a - b);
 			let working = true;
 			for (let i = 0; i < finalOrder.length; i++) {
-				if (finalOrder[i] > 4 || typeof finalOrder[i] != Number) {
+				if (finalOrder[i] > 4 || parseInt(finalOrder) == NaN) {
 					working = false;
 				}
 			}
@@ -478,35 +478,24 @@ const connection = mysql.createPool({
 				}
 
 				break;
-			case "/заказ":
-			case "/Заказ":
-				let IDofUser = ctx.message.user_id;
-				let orderArray = [];
-				connection.query(
-					"SELECT O.Date, F.Name as First, S.Name as Second, T.Name as Third, L.Name as Fourth FROM Orders O LEFT OUTER JOIN Courses F ON F.CourseID = O.First LEFT OUTER JOIN Courses S ON S.CourseID = O.Second LEFT OUTER JOIN Courses T ON T.CourseID = O.Third LEFT OUTER JOIN Courses L ON L.CourseID = O.Fourth WHERE O.UserID = ?",
-					IDofUser,
-					function (err, result) {
-						if (err) {
-							console.log(err.message);
-						}
-						if (result != 0) {
-							alreadyOrdered.push(
-								result[0].First,
-								result[0].Second,
-								result[0].Third,
-								result[0].Fourth
-							);
-							for (let i = 0; i < alreadyOrdered.length; i++) {
-								if (alreadyOrdered[i] !== null) {
-									orderArray.push(alreadyOrdered[i]);
-								}
-							}
-							ctx.reply("Ваш заказ: " + orderArray + ".");
-						} else if (result == 0) {
-							ctx.reply("У вас нету активных заказов.");
-						}
-					}
+			case "!заказ":
+			case "!Заказ":
+				const userOrders = await sequelize.query(
+					`SELECT Name FROM Dishes, Orders WHERE Dishes.DishID = Orders.DishID AND Orders.UserID = ${ctx.message.user_id}`
 				);
+				let orderArray = [];
+				for (let i = 0; i < userOrders[0].length; i++) {
+					orderArray.push(JSON.stringify(userOrders[0][i].Name));
+				}
+				if (orderArray.length == 0) {
+					await ctx.reply("У Вас нету активных заказов. ⚠");
+				} else {
+					await ctx.reply(
+						`Ваш заказ на ${mday}.${month}.${year} => ${orderArray.join(
+							", "
+						)} ✅`
+					);
+				}
 				break;
 			case "!команды":
 			case "!Команды":
