@@ -5,8 +5,9 @@
   "main": "bot.js",
   "dependencies": {
     "dotenv": "^8.2.0",
-    "mysql2": "^2.1.0",
-    "node-vk-bot-api": "^3.3.7"
+    "mysql2": "^2.2.5",
+    "node-vk-bot-api": "^3.3.7",
+    "sequelize": "^6.3.5"
   },
   "devDependencies": {},
   "scripts": {
