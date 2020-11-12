@@ -17,8 +17,11 @@ How to get started
 For example:
 
 > TOKEN = "xxxxx"
+>
 > GROUP_ID = "xxxx"
+>
 > SECRET = "xxx"
+>
 > CONFIRMATION = "xxxxx"
 
 # Notes
