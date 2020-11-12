@@ -245,49 +245,25 @@ const sequelize = new Sequelize(
 	bot.use(stage.middleware());
 
 	bot.command("/добавить", async (ctx) => {
-		let id = ctx.message.user_id;
-		connection.query(
-			"SELECT * FROM eaterymain.Menu WHERE DayOfWeek =?",
-			dayOfWeek,
-			function (menuError, menuResult) {
-				if (menuError) console.error(menuError);
-				if (menuResult[0].DishID == 0) {
-					ctx.reply("Невозможно оформить заказ на завтра.");
-				} else {
-					connection.query(
-						"SELECT * FROM Users WHERE UID = ?",
-						id,
-						function (userErr, userResults) {
-							if (userErr) {
-								console.error(userErr);
-							}
-							if (userResults.length != 0) {
-								connection.query(
-									"SELECT * FROM Orders WHERE UserID = ?",
-									id,
-									function (orderErr, orderResult) {
-										if (orderErr) {
-											console.error(orderErr);
-										}
-										if (orderResult.length == 0) {
-											ctx.scene.enter("order");
-										} else {
-											ctx.reply(
-												"Вы уже имеете заказ. Если хотите создать новый - удалите старый. 🚫"
-											);
-										}
-									}
-								);
-							} else {
-								ctx.reply(
-									"Вы не можете использовать эту команду, так как Вы не зарегестрированны в базе данных предприятия. 🚫"
-								);
-							}
-						}
-					);
-				}
-			}
+		const menuQuery = await sequelize.query(
+			`SELECT * FROM eaterymain.Menu WHERE DayOfWeek = ${dayOfWeek}`,
+			{ type: QueryTypes.SELECT }
 		);
+		if (menuQuery.length > 1) {
+			await ctx.reply("Невозможно оформить заказ на завтра.");
+		} else {
+			const activeUser = sequelize.query(
+				`SELECT * FROM Users WHERE UID = ${ctx.message.user_id}`,
+				{ type: QueryTypes.SELECT }
+			);
+			if (activeUser.length != 0) {
+				ctx.scene.enter("order");
+			} else {
+				ctx.reply(
+					"Вы не можете использовать эту команду, так как Вы не зарегестрированны в базе данных предприятия. 🚫"
+				);
+			}
+		}
 	});
 
 	//COMMANDS HADLING
