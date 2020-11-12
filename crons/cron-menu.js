@@ -24,9 +24,8 @@ console.log("CronJob started.");
 		const now = new Date(),
 			dayOfWeek = now.getDay() + 1,
 			year = now.getFullYear(),
-			month = now.getMonth(),
+			month = now.getMonth() + 1,
 			mday = now.getDate() + 1;
-
 		const hardDays = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 		if (hardDays.includes(mday)) {
@@ -83,7 +82,7 @@ console.log("CronJob started.");
 				}
 			}
 		} else {
-			if (users.length > 0) {
+			if (query.length >= 0) {
 				for (let i = 0; i < users.length; i++) {
 					await bot.sendMessage(
 						JSON.parse(users[i].UID),
