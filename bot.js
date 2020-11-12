@@ -57,9 +57,8 @@ const connection = mysql.createPool({
 	let finalOrder = [];
 	let totalPrice = [];
 	let orderMax = [];
-	let orderInfo = [];
-	let alreadyOrdered = [];
 	let productsResult;
+	let productsDeleteResult;
 
 	const scene = new Scene(
 		"order",
@@ -416,58 +415,55 @@ const connection = mysql.createPool({
 				break;
 			case "!удалить":
 			case "!Удалить":
-				const activeUsersasd = await sequelize.query(
-					// change variable name
+				const activeUser = await sequelize.query(
 					`SELECT * FROM Users WHERE UID = "${ctx.message.user_id}"`,
 					{ type: QueryTypes.SELECT }
 				);
-				if (activeUsers.length != 0) {
-					const orderQuery = `SELECT * FROM Orders WHERE UserID = `;
+				if (activeUser.length != 0) {
+					const productsData = `SELECT 
+                                AmountProduct, ProductID
+                                    FROM
+                                eaterymain.Compositions,
+                                eaterymain.Orders
+                                    WHERE
+                                Compositions.DishID = Orders.DishID AND
+                                UserID = ${ctx.message.user_id}`;
+					const productsQuery = await sequelize.query(productsData, {
+						type: QueryTypes.SELECT,
+					});
+					if (productsQuery != 0) {
+						productsDeleteResult = productsQuery;
 
+						for (let i = 0; i < productsDeleteResult.length; i++) {
+							connection.query(
+								`UPDATE Products SET Products.Amount = Products.Amount + ${JSON.parse(
+									productsDeleteResult[i].AmountProduct
+								)} WHERE Products.ProductID = ${JSON.parse(
+									productsDeleteResult[i].ProductID
+								)};`,
+								function (err) {
+									if (err) {
+										conn.rollback(function () {
+											console.error(err);
+										});
+									} else {
+										console.log("updated.");
+									}
+								}
+							);
+						}
+					}
 					connection.query(
-						"SELECT First, Second, Third, Fourth FROM Orders WHERE UserID = ?",
-						userID,
-						function (err1, result) {
-							if (err1) {
-								console.log(err1.message);
+						"DELETE FROM Orders WHERE UserID = ?",
+						ctx.message.user_id,
+						async function (error, result) {
+							if (error) {
+								console.error(error);
 							}
 							if (result != 0) {
-								orderInfo.push(
-									result[0].First,
-									result[0].Second,
-									result[0].Third,
-									result[0].Fourth
-								);
-
-								for (let i = 0; i < orderInfo.length; i++) {
-									connection.query(
-										"UPDATE Products SET Amount = Amount+100 WHERE ProductID=?",
-										orderInfo[i],
-										function (err2) {
-											if (err2) {
-												console.log(err2);
-											}
-										}
-									);
-								}
-								connection.query(
-									"DELETE FROM Orders WHERE UserID = ?",
-									userID,
-									function (err3, result2) {
-										if (err3) {
-											console.log(err3.message);
-										}
-										if (result2 != 0) {
-											ctx.reply("Заказ был удален.");
-										} else if (result2 == 0) {
-											ctx.reply(
-												"Нету заказа для удаления."
-											);
-										}
-									}
-								);
-							} else {
-								ctx.reply("У вас нету заказа для удаления.");
+								ctx.reply("Ваш заказ был удален.");
+							} else if (result == 0) {
+								ctx.reply("Нету заказа для удаления.");
 							}
 						}
 					);
