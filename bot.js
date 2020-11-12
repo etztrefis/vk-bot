@@ -4,6 +4,7 @@ const Scene = require("node-vk-bot-api/lib/scene");
 const Stage = require("node-vk-bot-api/lib/stage");
 const Session = require("node-vk-bot-api/lib/session");
 const { Sequelize, QueryTypes } = require("sequelize");
+const mysql = require("mysql2");
 
 const bot = new VkBot({
 	token: process.env.TOKEN,
@@ -58,8 +59,8 @@ const connection = mysql.createPool({
 	let orderMax = [];
 	let orderInfo = [];
 	let alreadyOrdered = [];
-	let price = [];
 	let productsResult;
+	let finalOutput = "";
 
 	const scene = new Scene(
 		"order",
@@ -79,51 +80,60 @@ const connection = mysql.createPool({
 				if (!isNaN(finalOrder[i])) {
 				} else {
 					await ctx.reply(
-						"Неверный ввод заказа. Возможно допущены строковые символы."
+						"Неверный ввод заказа. Возможно допущены строковые символы. 🚫"
 					);
 					ctx.scene.leave();
 					break;
 				}
 			}
+			orderMax.forEach((value) => console.log(value));
 			try {
-				let query = `SELECT 
-            Dishes.ID
-                FROM
-            eaterymain.Menu,
-                WHERE
-            Menu.DayOfWeek = "${dayOfWeek}"`;
+				let query = `SELECT
+				DishID
+				    FROM
+				eaterymain.Menu
+				    WHERE
+				Menu.DayOfWeek = ${dayOfWeek}`;
 				const menuQueryMain = await sequelize.query(query, {
 					type: QueryTypes.SELECT,
 				});
 				if (menuQueryMain != 0) {
 					let row = [
-						menuQueryMain[0].DishID,
-						menuQueryMain[1].DishID,
-						menuQueryMain[2].DishID,
-						menuQueryMain[3].DishID,
+						JSON.parse(menuQueryMain[0].DishID),
+						JSON.parse(menuQueryMain[1].DishID),
+						JSON.parse(menuQueryMain[2].DishID),
+						JSON.parse(menuQueryMain[3].DishID),
 					];
 
-					// if (orderMax.indexOf(orderMax[0]) != -1) {
-					// 	// if array[i] not null = row[i] else null
-					// 	orderMax[0] = row[0];
-					// } else if (orderMax.indexOf(orderMax[0]) == -1) {
-					// 	orderMax[0] = "null";
-					// }
-					// if (orderMax.indexOf(orderMax[1]) != -1) {
-					// 	orderMax[1] = row[1];
-					// } else if (orderMax.indexOf(orderMax[1]) == -1) {
-					// 	orderMax[1] = "null";
-					// }
-					// if (orderMax.indexOf(orderMax[2]) != -1) {
-					// 	orderMax[2] = row[2];
-					// } else if (orderMax.indexOf(orderMax[2]) == -1) {
-					// 	orderMax[2] = "null";
-					// }
-					// if (orderMax.indexOf(orderMax[3]) != -1) {
-					// 	orderMax[3] = row[3];
-					// } else if (orderMax.indexOf(orderMax[3]) == -1) {
-					// 	orderMax[3] = "null";
-					// }
+					if (orderMax.indexOf(orderMax[0]) != -1) {
+						// if array[i] not null = row[i] else null
+						orderMax[0] = row[0];
+					} else if (orderMax.indexOf(orderMax[0]) == -1) {
+						orderMax[0] = "null";
+					}
+					if (orderMax.indexOf(orderMax[1]) != -1) {
+						orderMax[1] = row[1];
+					} else if (orderMax.indexOf(orderMax[1]) == -1) {
+						orderMax[1] = "null";
+					}
+					if (orderMax.indexOf(orderMax[2]) != -1) {
+						orderMax[2] = row[2];
+					} else if (orderMax.indexOf(orderMax[2]) == -1) {
+						orderMax[2] = "null";
+					}
+					if (orderMax.indexOf(orderMax[3]) != -1) {
+						orderMax[3] = row[3];
+					} else if (orderMax.indexOf(orderMax[3]) == -1) {
+						orderMax[3] = "null";
+					}
+				}
+				let i = 0;
+				while (i < orderMax.length) {
+					if (orderMax[i] === "null") {
+						orderMax.splice(i, 1);
+					} else {
+						i++;
+					}
 				}
 
 				await ctx.reply("Вы уверены? (Да или нет)");
@@ -144,37 +154,45 @@ const connection = mysql.createPool({
 					type: QueryTypes.SELECT,
 				});
 				if (sumQuery != 0) {
-					totalPrice = sumResult;
-				}
-
-				for (let i = 0; i < orderMax.length; i++) {
-					const ordersData = `INSERT INTO Orders(UserID, DishID, Date) 
-                                    VALUES (${ctx.message.user_id}, ${
-						orderMax[i]
-					}, "${setTimeToNormal()}")`;
-					const ordersQuery = await sequelize.query(ordersData, {
-						type: QueryTypes.SELECT,
-					});
-				}
-				const productsData = `SELECT 
-                    AmountProduct, ProductID
-                        FROM
-                    eaterymain.Compositions,
-                    eaterymain.Orders
-                        WHERE
-                    Compositions.DishID = Orders.DishID AND
-                    UserID = ${ctx.message.user_id}`;
-				const productsQuery = await sequelize.query(productsData, {
-					type: QueryTypes.SELECT,
-				});
-				if (productsData != 0) {
-					productsResult = productsData;
+					totalPrice = sumQuery;
 				}
 				setTimeout(() => {
-					connection.getConnection(function (err, conn) {
+					connection.getConnection(async function (err, conn) {
 						if (err) console.log(err);
 
-						conn.beginTransaction(function (err) {
+						conn.beginTransaction(async function (err) {
+							for (let i = 0; i < orderMax.length; i++) {
+								const ordersData = `INSERT INTO Orders(UserID, DishID, Date) 
+                                                VALUES (${
+													ctx.message.user_id
+												}, ${
+									orderMax[i]
+								}, "${setTimeToNormal()}")`;
+								const ordersQuery = await sequelize
+									.query(ordersData, {
+										type: QueryTypes.INSERT,
+									})
+									.catch(function (error) {
+										console.log(error);
+									});
+							}
+							const productsData = `SELECT 
+                                AmountProduct, ProductID
+                                    FROM
+                                eaterymain.Compositions,
+                                eaterymain.Orders
+                                    WHERE
+                                Compositions.DishID = Orders.DishID AND
+                                UserID = ${ctx.message.user_id}`;
+							const productsQuery = await sequelize.query(
+								productsData,
+								{
+									type: QueryTypes.SELECT,
+								}
+							);
+							if (productsQuery != 0) {
+								productsResult = productsQuery;
+							}
 							if (err) {
 								conn.rollback(function () {
 									conn.release();
@@ -185,7 +203,7 @@ const connection = mysql.createPool({
 								conn.query(
 									`UPDATE Products SET Products.Amount = Products.Amount - ${JSON.parse(
 										productsResult[i].AmountProduct
-									)} 
+									)}
                                             WHERE Products.ProductID = ${JSON.parse(
 												productsResult[i].ProductID
 											)};`,
@@ -223,7 +241,7 @@ const connection = mysql.createPool({
 												});
 											}
 											ctx.reply(
-												`Ваш заказ: ${finalOrder} добавлен в систему. Стоимость: ${totalPrice[0].Sum} рублей. \r\n Будьте внимательны! Вы можете удалить до 05:00. ${mday}.${month}.${year}.`
+												`Ваш заказ: ${finalOrder} добавлен в систему. Стоимость: ${totalPrice[0].Sum} рублей. \r\n Будьте внимательны! Вы можете удалить до 05:00 ${mday}.${month}.${year}.`
 											);
 											console.log("Success");
 										});
@@ -241,7 +259,10 @@ const connection = mysql.createPool({
 				await ctx.reply("Заказ отменен.");
 				ctx.scene.leave();
 			} else {
-				ctx.reply("Принимаются только значения да или нет.");
+				ctx.reply(
+					"Принимаются только значения да или нет. Заказ отменен"
+				);
+				ctx.scene.leave();
 			}
 		}
 	);
@@ -251,20 +272,29 @@ const connection = mysql.createPool({
 	bot.use(session.middleware());
 	bot.use(stage.middleware());
 
-	bot.command("/добавить", async (ctx) => {
+	bot.command("!добавить", async (ctx) => {
 		const menuQuery = await sequelize.query(
 			`SELECT * FROM eaterymain.Menu WHERE DayOfWeek = ${dayOfWeek}`,
 			{ type: QueryTypes.SELECT }
 		);
-		if (menuQuery.length > 1) {
-			await ctx.reply("Невозможно оформить заказ на завтра.");
+		if (menuQuery.length < 1) {
+			await ctx.reply("Невозможно оформить заказ на завтра. 🚫");
 		} else {
-			const activeUser = sequelize.query(
+			const activeUser = await sequelize.query(
 				`SELECT * FROM Users WHERE UID = ${ctx.message.user_id}`,
 				{ type: QueryTypes.SELECT }
 			);
 			if (activeUser.length != 0) {
-				ctx.scene.enter("order");
+				const orderUser = await sequelize.query(
+					`SELECT * FROM Orders WHERE UserID = "${ctx.message.user_id}"`
+				);
+				if (orderUser.length > 2) {
+					await ctx.reply(
+						"У Вас уже есть заказ, если хотите создать новый - удалите старый. 🚫"
+					);
+				} else {
+					ctx.scene.enter("order");
+				}
 			} else {
 				ctx.reply(
 					"Вы не можете использовать эту команду, так как Вы не зарегестрированны в базе данных предприятия. 🚫"
