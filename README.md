@@ -12,7 +12,7 @@ How to get started
 > 2. cd into the bot's folder
 > 3. `npm i`
 > 4. Create .env file in this folder
-> 5. Create variables `TOKEN`, `GROUP_ID`, `CONFIRMATION` AND `SECRET` in this file with username and oauth token of your twitch bot.
+> 5. Create variables `TOKEN`, `GROUP_ID`, `CONFIRMATION` AND `SECRET` in this file with secret stuff of your bot.
 
 For example:
 
