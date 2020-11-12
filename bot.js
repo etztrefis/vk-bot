@@ -3,7 +3,7 @@ const VkBot = require("node-vk-bot-api");
 const Scene = require("node-vk-bot-api/lib/scene");
 const Stage = require("node-vk-bot-api/lib/stage");
 const Session = require("node-vk-bot-api/lib/session");
-const { Sequelize, QueryTypes } = require("sequelize");
+const { Sequelize, QueryTypes, NUMBER } = require("sequelize");
 const mysql = require("mysql2");
 
 const bot = new VkBot({
@@ -60,7 +60,6 @@ const connection = mysql.createPool({
 	let orderInfo = [];
 	let alreadyOrdered = [];
 	let productsResult;
-	let finalOutput = "";
 
 	const scene = new Scene(
 		"order",
@@ -75,10 +74,21 @@ const connection = mysql.createPool({
 			mainOrder = mainOrder.replace(/[^,0-9]/gim, "");
 			finalOrder = mainOrder.split(/,\s*/);
 			finalOrder.sort((a, b) => a - b);
+			let working = true;
+			for (let i = 0; i < finalOrder.length; i++) {
+				if (finalOrder[i] > 4 || typeof finalOrder[i] != Number) {
+					working = false;
+				}
+			}
+			if (!working) {
+				await ctx.reply(
+					"Неверный ввод заказа. Возможно допущены строковые символы. 🚫"
+				);
+				ctx.scene.leave();
+			}
 			orderMax = [...finalOrder];
 			for (let i = 0; i < finalOrder.length; i++) {
-				if (!isNaN(finalOrder[i])) {
-				} else {
+				if (isNaN(finalOrder[i])) {
 					await ctx.reply(
 						"Неверный ввод заказа. Возможно допущены строковые символы. 🚫"
 					);
@@ -273,6 +283,19 @@ const connection = mysql.createPool({
 	bot.use(stage.middleware());
 
 	bot.command("!добавить", async (ctx) => {
+		try {
+			const queryData = `INSERT INTO Messages_Logs(UID, Date, Message) 
+                                VALUES("${
+									ctx.message.user_id
+								}","${setTimeToNormal()}","${
+				ctx.message.body
+			}")`;
+			const query = await sequelize.query(queryData, {
+				type: QueryTypes.INSERT,
+			});
+		} catch (error) {
+			console.error(error);
+		}
 		const menuQuery = await sequelize.query(
 			`SELECT * FROM eaterymain.Menu WHERE DayOfWeek = ${dayOfWeek}`,
 			{ type: QueryTypes.SELECT }
