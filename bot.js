@@ -3,6 +3,7 @@ const VkBot = require("node-vk-bot-api");
 const Scene = require("node-vk-bot-api/lib/scene");
 const Stage = require("node-vk-bot-api/lib/stage");
 const Session = require("node-vk-bot-api/lib/session");
+const Markup = require("node-vk-bot-api/lib/markup");
 const { Sequelize, QueryTypes } = require("sequelize");
 const mysql = require("mysql2");
 const express = require("express");
@@ -153,7 +154,16 @@ const connection = mysql.createPool({
 					}
 				}
 
-				await ctx.reply("Вы уверены? (Да или нет) ⚠");
+				await ctx.reply(
+					"Вы уверены? (Да или нет) ⚠",
+					null,
+					Markup.keyboard([
+						[
+							Markup.button("Да", "positive"),
+							Markup.button("Нет", "negative"),
+						],
+					])
+				);
 				ctx.scene.next();
 			} catch (err) {
 				console.error(err);
@@ -417,8 +427,16 @@ const connection = mysql.createPool({
 				break;
 			case "start":
 			case "Start":
+			case "Начало":
+			case "начало":
+			case "Начать":
+			case "начать":
 				await ctx.reply(
-					"Начало работы с чат-ботом. \r\n 📖!команды - команды, доступные для использования."
+					"Начало работы с чат-ботом. \r\n 📖 !команды - команды, доступные для использования.",
+					null,
+					Markup.keyboard([
+						[Markup.button("!команды", "primary")],
+					]).oneTime()
 				);
 				break;
 			case "!удалить":
@@ -505,11 +523,22 @@ const connection = mysql.createPool({
 			case "!Команды":
 				ctx.reply(
 					`📖 Доступные Вам команды:\r\n
-                        /добавить - диалог добавления нового заказа.
-                        /удалить - удалить созданый ранее заказ.
-                        /заказ - просмотр созданного заказа.
-                        /меню - показ меню на следующий день.
-                        /команды - просмотр доступных команд.`
+                        !добавить - диалог добавления нового заказа.
+                        !удалить - удалить созданый ранее заказ.
+                        !заказ - просмотр созданного заказа.
+                        !меню - показ меню на следующий день.
+                        !команды - просмотр доступных команд.`,
+					null,
+					Markup.keyboard([
+						[
+							Markup.button("!добавить", "positive"),
+							Markup.button("!удалить", "negative"),
+						],
+						[
+							Markup.button("!заказ", "primary"),
+							Markup.button("!меню", "primary"),
+						],
+					])
 				);
 				break;
 			default:
