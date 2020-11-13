@@ -1,13 +1,14 @@
 require("dotenv").config();
+const { Botact } = require("botact");
+const mysql = require("mysql2");
+const express = require("express");
+const bodyParser = require("body-parser");
 const VkBot = require("node-vk-bot-api");
 const Scene = require("node-vk-bot-api/lib/scene");
 const Stage = require("node-vk-bot-api/lib/stage");
 const Session = require("node-vk-bot-api/lib/session");
 const Markup = require("node-vk-bot-api/lib/markup");
 const { Sequelize, QueryTypes } = require("sequelize");
-const mysql = require("mysql2");
-const express = require("express");
-const bodyParser = require("body-parser");
 
 const app = express();
 
