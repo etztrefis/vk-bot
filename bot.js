@@ -3,8 +3,12 @@ const VkBot = require("node-vk-bot-api");
 const Scene = require("node-vk-bot-api/lib/scene");
 const Stage = require("node-vk-bot-api/lib/stage");
 const Session = require("node-vk-bot-api/lib/session");
-const { Sequelize, QueryTypes, NUMBER, or } = require("sequelize");
+const { Sequelize, QueryTypes } = require("sequelize");
 const mysql = require("mysql2");
+const express = require("express");
+const bodyParser = require("body-parser");
+
+const app = express();
 
 const bot = new VkBot({
 	token: process.env.TOKEN,
@@ -12,6 +16,10 @@ const bot = new VkBot({
 	secret: process.env.SECRET,
 	confirmation: process.env.CONFIRMATION,
 });
+
+app.use(bodyParser.json());
+app.post("/", bot.webhookCallback);
+app.listen(process.env.PORT);
 
 const sequelize = new Sequelize(
 	process.env.DBNAME,
