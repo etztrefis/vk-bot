@@ -1,5 +1,8 @@
 require("dotenv").config();
 const mysql = require("mysql2");
+const qr = require("qr-image");
+const fs = require("fs");
+const imgurUploader = require("imgur-uploader");
 const express = require("express");
 const bodyParser = require("body-parser");
 const VkBot = require("node-vk-bot-api");
@@ -162,7 +165,7 @@ const connection = mysql.createPool({
 							Markup.button("Да", "positive"),
 							Markup.button("Нет", "negative"),
 						],
-					])
+					]).oneTime()
 				);
 				ctx.scene.next();
 			} catch (err) {
@@ -270,6 +273,69 @@ const connection = mysql.createPool({
 											ctx.reply(
 												`Ваш заказ: ${finalOrder} добавлен в систему. Стоимость: ${totalPrice[0].Sum} рублей. \r\n Будьте внимательны! Вы можете удалить до 05:00 ${mday}.${month}.${year}. ✅`
 											);
+											(async () => {
+												const user = await sequelize.query(
+													`SELECT FirstName, LastName FROM Users WHERE UID = ${ctx.message.user_id}`
+												);
+												const userOrders = await sequelize.query(
+													`SELECT Name FROM Dishes, Orders WHERE Dishes.DishID = Orders.DishID AND Orders.UserID = ${ctx.message.user_id}`
+												);
+												let orderArray = [];
+												for (
+													let i = 0;
+													i < userOrders[0].length;
+													i++
+												) {
+													orderArray.push(
+														JSON.stringify(
+															userOrders[0][i]
+																.Name
+														)
+													);
+												}
+												const qrCodeText = `На ${mday}.${month}.${year}, Цена: ${
+													totalPrice[0].Sum
+												}, Покупатель: ${JSON.stringify(
+													user[0][0].FirstName
+												)} ${JSON.stringify(
+													user[0][0].LastName
+												)}, Заказ: ${orderArray.join(
+													", "
+												)}`;
+
+												let qr_png = qr.image(
+													qrCodeText,
+													{
+														type: "png",
+													}
+												);
+												qr_png.pipe(
+													require("fs").createWriteStream(
+														`./static/${ctx.message.user_id}.png`
+													)
+												);
+
+												setTimeout(() => {
+													imgurUploader(
+														fs.readFileSync(
+															`./static/${ctx.message.user_id}.png`,
+															{
+																title:
+																	ctx.message
+																		.user_id,
+															}
+														)
+													)
+														.then((data) => {
+															ctx.reply(
+																`Ваша ссылка на qr-код заказа: ${data.link}`
+															);
+														})
+														.catch((error) => {
+															console.log(error);
+														});
+												}, 2000);
+											})();
 											console.log("Success");
 										});
 									}
