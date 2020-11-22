@@ -14,7 +14,7 @@ const { Sequelize, QueryTypes } = require("sequelize");
 const cron = require("node-cron");
 
 //db-updater
-cron.schedule("00 08 * * *", () => {
+cron.schedule("00 23  * * *", () => {
 	console.log("Start logging.");
 
 	const sequelize = new Sequelize(
