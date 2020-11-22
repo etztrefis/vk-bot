@@ -62,7 +62,7 @@ cron.schedule("00 08 * * *", () => {
 });
 
 //menu
-cron.schedule("00 01 * * *", () => {
+cron.schedule("00 07 * * *", () => {
 	const bot = new VkBot({
 		token: process.env.TOKEN,
 		group_id: process.env.GROUP_ID,
