@@ -209,7 +209,7 @@ const connection = mysql.createPool({
 		console.log("Bot started.");
 	});
 
-	const now = new Date(),
+	let now = new Date(),
 		dayOfWeek = now.getDay() + 1,
 		year = now.getFullYear(),
 		month = now.getMonth() + 1,
