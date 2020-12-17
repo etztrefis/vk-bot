@@ -34,11 +34,9 @@ cron.schedule("00 23  * * *", () => {
 			if (query.length > 0) {
 				for (let i = 0; i < query.length; i++) {
 					const queryData = `INSERT INTO 
-                             Orders_Logs(Date, UserID, DishID) 
-                                VALUES 
-                             (${JSON.stringify(
-									query[i].Date
-								)}, ${JSON.stringify(
+							Orders_Logs(Date, UserID, DishID) 
+								VALUES 
+							(${JSON.stringify(query[i].Date)}, ${JSON.stringify(
 						query[i].UserID
 					)}, ${JSON.parse(query[i].DishID)})`;
 					console.log(queryData);
@@ -133,10 +131,10 @@ cron.schedule("00 07 * * *", () => {
 					}
 				}
 				const message = `📅 Меню на: ${mday}.${month}.${year}\r\n\r\n
-                1. ${rows[0]} ${rows[1]} руб. | Энерг. ценность: ${rows[2]} ккал.
-                2. ${rows[3]} ${rows[4]} руб. | Энерг. ценность: ${rows[5]} ккал. 
-                3. ${rows[6]} ${rows[7]} руб. | Энерг. ценность: ${rows[8]} ккал. 
-                4. ${rows[9]} ${rows[10]} руб. | Энерг. ценность: ${rows[11]} ккал. \r\n`;
+				1. ${rows[0]} ${rows[1]} руб. | Энерг. ценность: ${rows[2]} ккал.
+				2. ${rows[3]} ${rows[4]} руб. | Энерг. ценность: ${rows[5]} ккал. 
+				3. ${rows[6]} ${rows[7]} руб. | Энерг. ценность: ${rows[8]} ккал. 
+				4. ${rows[9]} ${rows[10]} руб. | Энерг. ценность: ${rows[11]} ккал. \r\n`;
 				if (users.length > 0) {
 					for (let i = 0; i < users.length; i++) {
 						await bot.sendMessage(
@@ -269,9 +267,9 @@ const connection = mysql.createPool({
 			try {
 				let query = `SELECT
 				DishID
-				    FROM
+					FROM
 				eaterymain.Menu
-				    WHERE
+					WHERE
 				Menu.DayOfWeek = ${dayOfWeek}`;
 				const menuQueryMain = await sequelize.query(query, {
 					type: QueryTypes.SELECT,
@@ -333,11 +331,11 @@ const connection = mysql.createPool({
 		async (ctx) => {
 			if (ctx.message.body == "Да" || ctx.message.body == "да") {
 				const sumData = `SELECT 
-                SUM(Dishes.Price) as Sum
-                    FROM
-                eaterymain.Dishes
-                    WHERE
-                Dishes.DishID IN (${orderMax})`;
+				SUM(Dishes.Price) as Sum
+					FROM
+				eaterymain.Dishes
+					WHERE
+				Dishes.DishID IN (${orderMax})`;
 				const sumQuery = await sequelize.query(sumData, {
 					type: QueryTypes.SELECT,
 				});
@@ -351,11 +349,7 @@ const connection = mysql.createPool({
 						conn.beginTransaction(async function (err) {
 							for (let i = 0; i < orderMax.length; i++) {
 								const ordersData = `INSERT INTO Orders(UserID, DishID, Date) 
-                                                VALUES (${
-													ctx.message.user_id
-												}, ${
-									orderMax[i]
-								}, "${setTimeToNormal()}")`;
+												VALUES (${ctx.message.user_id}, ${orderMax[i]}, "${setTimeToNormal()}")`;
 								const ordersQuery = await sequelize
 									.query(ordersData, {
 										type: QueryTypes.INSERT,
@@ -392,9 +386,7 @@ const connection = mysql.createPool({
 									`UPDATE Products SET Products.Amount = Products.Amount - ${JSON.parse(
 										productsResult[i].AmountProduct
 									)}
-                                            WHERE Products.ProductID = ${JSON.parse(
-												productsResult[i].ProductID
-											)};`,
+											WHERE Products.ProductID = ${JSON.parse(productsResult[i].ProductID)};`,
 									function (err) {
 										if (err) {
 											conn.rollback(function () {
@@ -528,11 +520,7 @@ const connection = mysql.createPool({
 	bot.command("!добавить", async (ctx) => {
 		try {
 			const queryData = `INSERT INTO Messages_Logs(UID, Date, Message) 
-                                VALUES("${
-									ctx.message.user_id
-								}","${setTimeToNormal()}","${
-				ctx.message.body
-			}")`;
+								VALUES("${ctx.message.user_id}","${setTimeToNormal()}","${ctx.message.body}")`;
 			const query = await sequelize.query(queryData, {
 				type: QueryTypes.INSERT,
 			});
@@ -573,11 +561,7 @@ const connection = mysql.createPool({
 	bot.event("message_new", async (ctx) => {
 		try {
 			const queryData = `INSERT INTO Messages_Logs(UID, Date, Message) 
-                                VALUES("${
-									ctx.message.user_id
-								}","${setTimeToNormal()}","${
-				ctx.message.body
-			}")`;
+								VALUES("${ctx.message.user_id}","${setTimeToNormal()}","${ctx.message.body}")`;
 			const query = await sequelize.query(queryData, {
 				type: QueryTypes.INSERT,
 			});
@@ -595,13 +579,13 @@ const connection = mysql.createPool({
 				);
 				if (activeUsers.length != 0) {
 					let queryData = `SELECT 
-                                Dishes.Name, Dishes.Price, Dishes.EnergyValue
-                                    FROM
-                                eaterymain.Menu,
-                                eaterymain.Dishes
-                                    WHERE
-                                Menu.DayOfWeek = ${dayOfWeek} AND
-                                Dishes.DishID = Menu.DishID`;
+								Dishes.Name, Dishes.Price, Dishes.EnergyValue
+									FROM
+								eaterymain.Menu,
+								eaterymain.Dishes
+									WHERE
+								Menu.DayOfWeek = ${dayOfWeek} AND
+								Dishes.DishID = Menu.DishID`;
 					const query = await sequelize.query(queryData, {
 						type: QueryTypes.SELECT,
 					});
@@ -633,10 +617,10 @@ const connection = mysql.createPool({
 								}
 							}
 							const message = `📅 Меню на: ${mday}.${month}.${year}\r\n\r\n
-                                            1. ${rows[0]} ${rows[1]} руб. | Энерг. ценность: ${rows[2]} ккал.
-                                            2. ${rows[3]} ${rows[4]} руб. | Энерг. ценность: ${rows[5]} ккал. 
-                                            3. ${rows[6]} ${rows[7]} руб. | Энерг. ценность: ${rows[8]} ккал. 
-                                            4. ${rows[9]} ${rows[10]} руб. | Энерг. ценность: ${rows[11]} ккал. \r\n`;
+										1. ${rows[0]} ${rows[1]} руб. | Энерг. ценность: ${rows[2]} ккал.
+										2. ${rows[3]} ${rows[4]} руб. | Энерг. ценность: ${rows[5]} ккал. 
+										3. ${rows[6]} ${rows[7]} руб. | Энерг. ценность: ${rows[8]} ккал. 
+										4. ${rows[9]} ${rows[10]} руб. | Энерг. ценность: ${rows[11]} ккал. \r\n`;
 							await bot.sendMessage(ctx.message.user_id, message);
 						}
 					} catch (error) {
@@ -782,10 +766,10 @@ const connection = mysql.createPool({
 			case "!Команды":
 				ctx.reply(
 					`📖 Доступные Вам команды:\r\n
-                        !добавить - диалог добавления нового заказа.
-                        !удалить - удалить созданый ранее заказ.
-                        !заказ - просмотр созданного заказа.
-                        !меню - показ меню на следующий день.
+						!добавить - диалог добавления нового заказа.
+						!удалить - удалить созданый ранее заказ.
+						!заказ - просмотр созданного заказа.
+						!меню - показ меню на следующий день.
 						!команды - просмотр доступных команд.
 						!код - создает код для регистрации администратора [доступно только администраторам].`,
 					null,
