@@ -97,13 +97,13 @@ cron.schedule("00 07 * * *", () => {
 			}
 
 			const queryData = `SELECT 
-    Dishes.Name, Dishes.Price, Dishes.EnergyValue
-        FROM
-    eaterymain.Menu,
-    eaterymain.Dishes
-        WHERE
-    Menu.DayOfWeek = "${dayOfWeek}" AND
-    Dishes.DishID = Menu.DishID`;
+				Dishes.Name, Dishes.Price, Dishes.EnergyValue
+					FROM
+				 eaterymain.Menu,
+				eaterymain.Dishes
+					WHERE
+				Menu.DayOfWeek = "${dayOfWeek}" AND
+				Dishes.DishID = Menu.DishID`;
 
 			const users = await sequelize.query("SELECT UID FROM Users", {
 				type: QueryTypes.SELECT,
@@ -365,13 +365,13 @@ const connection = mysql.createPool({
 									});
 							}
 							const productsData = `SELECT 
-                                AmountProduct, ProductID
-                                    FROM
-                                eaterymain.Compositions,
-                                eaterymain.Orders
-                                    WHERE
-                                Compositions.DishID = Orders.DishID AND
-                                UserID = ${ctx.message.user_id}`;
+								AmountProduct, ProductID
+									FROM
+								eaterymain.Compositions,
+								eaterymain.Orders
+									WHERE
+								Compositions.DishID = Orders.DishID AND
+								UserID = ${ctx.message.user_id}`;
 							const productsQuery = await sequelize.query(
 								productsData,
 								{
@@ -484,8 +484,10 @@ const connection = mysql.createPool({
 															}
 														)
 													)
-														.then((data) => {
-															ctx.reply(
+														.then(async (data) => {
+															await sequelize.query(`INSERT INTO QRCodes (UID, Link) VALUES
+																(${ctx.message.user_id}, ${data.link})`);
+															await ctx.reply(
 																`Ваша ссылка на qr-код заказа: ${data.link}`
 															);
 														})
@@ -671,13 +673,13 @@ const connection = mysql.createPool({
 				);
 				if (activeUser.length != 0) {
 					const productsData = `SELECT 
-                                AmountProduct, ProductID
-                                    FROM
-                                eaterymain.Compositions,
-                                eaterymain.Orders
-                                    WHERE
-                                Compositions.DishID = Orders.DishID AND
-                                UserID = ${ctx.message.user_id}`;
+								AmountProduct, ProductID
+									FROM
+								eaterymain.Compositions,
+								eaterymain.Orders
+									WHERE
+								Compositions.DishID = Orders.DishID AND
+								UserID = ${ctx.message.user_id}`;
 					const productsQuery = await sequelize.query(productsData, {
 						type: QueryTypes.SELECT,
 					});
@@ -762,7 +764,7 @@ const connection = mysql.createPool({
 						.then(() => {
 							ctx.reply(
 								`Код для регистрации нового администратора: ${validateCode}. Количество активаций: 1. 
-								После регистрации он станет недоступен.`
+								После регистрации он станет недоступен. ✅`
 							);
 						})
 						.catch((error) => {
