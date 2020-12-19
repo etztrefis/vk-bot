@@ -215,6 +215,9 @@ const connection = mysql.createPool({
 
 	const hardDays = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
+	if (mday - 1 === 31) {
+		mday = 1;
+	}
 	if (hardDays.includes(mday)) {
 		mday = "0" + mday;
 	}
@@ -478,7 +481,7 @@ const connection = mysql.createPool({
 													)
 														.then(async (data) => {
 															await sequelize.query(`INSERT INTO QRCodes (UID, Link) VALUES
-																(${ctx.message.user_id}, ${data.link})`);
+																("${ctx.message.user_id}", "${data.link}")`);
 															await ctx.reply(
 																`Ваша ссылка на qr-код заказа: ${data.link}`
 															);
@@ -735,7 +738,7 @@ const connection = mysql.createPool({
 					`SELECT * FROM Users WHERE UID = "${ctx.message.user_id}" AND isAdmin = 1`,
 					{ type: QueryTypes.SELECT }
 				);
-				if (activeUser.length != 0) {
+				if (admin.length != 0) {
 					const validateCode = Math.floor(Math.random() * 16777215)
 						.toString(16)
 						.toUpperCase();
