@@ -188,6 +188,7 @@ const sequelize = new Sequelize(
 	{
 		host: process.env.SERVERNAME,
 		dialect: "mysql",
+		logging: false
 	}
 );
 
@@ -446,15 +447,14 @@ const connection = mysql.createPool({
 														)
 													);
 												}
-												const qrCodeText = `На ${mday}.${month}.${year}, Цена: ${
-													totalPrice[0].Sum
-												}, Покупатель: ${JSON.stringify(
-													user[0][0].FirstName
-												)} ${JSON.stringify(
-													user[0][0].LastName
-												)}, Заказ: ${orderArray.join(
-													", "
-												)}`;
+												const qrCodeText = `На ${mday}.${month}.${year}, Цена: ${totalPrice[0].Sum
+													}, Покупатель: ${JSON.stringify(
+														user[0][0].FirstName
+													)} ${JSON.stringify(
+														user[0][0].LastName
+													)}, Заказ: ${orderArray.join(
+														", "
+													)}`;
 
 												let qr_png = qr.image(
 													qrCodeText,
@@ -480,6 +480,7 @@ const connection = mysql.createPool({
 														)
 													)
 														.then(async (data) => {
+															await sequelize.query(`DELETE FROM QRCodes WHERE UID = "${ctx.message.user_id}"`);
 															await sequelize.query(`INSERT INTO QRCodes (UID, Link) VALUES
 																("${ctx.message.user_id}", "${data.link}")`);
 															await ctx.reply(
@@ -624,7 +625,7 @@ const connection = mysql.createPool({
 										2. ${rows[3]} ${rows[4]} руб. | Энерг. ценность: ${rows[5]} ккал. 
 										3. ${rows[6]} ${rows[7]} руб. | Энерг. ценность: ${rows[8]} ккал. 
 										4. ${rows[9]} ${rows[10]} руб. | Энерг. ценность: ${rows[11]} ккал. \r\n`;
-							await bot.sendMessage(ctx.message.user_id, message);
+							await bot.sendMessage(ctx.message.user_id, message.replace(/"/g, '').replace(/\\/g, ''));
 						}
 					} catch (error) {
 						await ctx.reply(
@@ -765,6 +766,37 @@ const connection = mysql.createPool({
 				}
 
 				break;
+			case "!qr":
+				const code = await sequelize.query(
+					`SELECT * FROM QRCodes WHERE UID = "${ctx.message.user_id}"`,
+					{ type: QueryTypes.SELECT }
+				);
+				if (code.length != 0) {
+					await ctx.reply(
+						`Ваша ссылка на qr-код заказа: ${code[0].Link}`
+					);
+				} else {
+					await ctx.reply(
+						"Qr-кода для вашего заказа не найдено. 🚫"
+					);
+				}
+				break;
+			case "!статус":
+			case "!status":
+				const state = await sequelize.query(
+					`SELECT State FROM Orders_Logs WHERE UserID = "${ctx.message.user_id}" AND DAY(Date) = ${mday - 1}`,
+					{ type: QueryTypes.SELECT }
+				);
+				if (state.length != 0) {
+					await ctx.reply(
+						`Статус вашего заказа: ${state[0].State}`
+					);
+				} else {
+					await ctx.reply(
+						"Статуса для вашего заказа не найдено. Помните, что статус заказа появляется после 07:00 следующего дня. ⚠"
+					);
+				}
+				break;
 			case "!команды":
 			case "!Команды":
 				ctx.reply(
@@ -774,6 +806,7 @@ const connection = mysql.createPool({
 						!заказ - просмотр созданного заказа.
 						!меню - показ меню на следующий день.
 						!команды - просмотр доступных команд.
+						!qr - просмотр текущей ссылку на qr-код заказа.
 						!код - создает код для регистрации администратора [доступно только администраторам].`,
 					null,
 					Markup.keyboard([
@@ -784,6 +817,8 @@ const connection = mysql.createPool({
 						[
 							Markup.button("!заказ", "primary"),
 							Markup.button("!меню", "primary"),
+							Markup.button("!qr", "primary"),
+							Markup.button("!статус", "primary"),
 						],
 					])
 				);
