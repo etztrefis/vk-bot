@@ -80,12 +80,12 @@ cron.schedule("00 07 * * *", () => {
 	console.log("CronJob started.");
 	(async () => {
 		try {
-			const now = new Date(),
+			let now = new Date(),
 				dayOfWeek = now.getDay() + 1,
 				year = now.getFullYear(),
 				month = now.getMonth() + 1,
 				mday = now.getDate() + 1;
-			const hardDays = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+			let hardDays = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 			if (hardDays.includes(mday)) {
 				mday = "0" + mday;
