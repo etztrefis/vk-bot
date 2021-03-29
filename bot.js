@@ -799,12 +799,19 @@ const connection = mysql.createPool({
 			case "!статус":
 			case "!status":
 				const state = await sequelize.query(
-					`SELECT State FROM Orders_Logs WHERE UserID = "${ctx.message.user_id}" AND DAY(Date) = ${mday - 1}`,
+					`SELECT State, Dishes.Name
+					FROM Orders_Logs
+					INNER JOIN Dishes ON Orders_Logs.ID = Dishes.DishID
+					WHERE Orders_Logs.UserID = "${ctx.message.user_id}" AND DAY(DATE) = ${mday - 1}`,
 					{ type: QueryTypes.SELECT }
 				);
 				if (state.length != 0) {
+					let message = "\n";
+					for(let i =0; i < state.length; i++){
+						message += `${state[i].Name} : ${state[i].State} \n`
+					}
 					await ctx.reply(
-						`Статус вашего заказа: ${state[0].State}`
+						`🍔 Статус вашего заказа: ${message}`
 					);
 				} else {
 					await ctx.reply(
