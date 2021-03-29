@@ -14,7 +14,7 @@ const { Sequelize, QueryTypes } = require("sequelize");
 const cron = require("node-cron");
 
 //db-updater
-cron.schedule("00 23  * * *", () => {
+cron.schedule("00 03  * * *", () => {
 	console.log("Start logging.");
 
 	const sequelize = new Sequelize(
@@ -60,7 +60,7 @@ cron.schedule("00 23  * * *", () => {
 });
 
 //menu
-cron.schedule("00 07 * * *", () => {
+cron.schedule("00 09 * * *", () => {
 	const bot = new VkBot({
 		token: process.env.TOKEN,
 		group_id: process.env.GROUP_ID,
@@ -93,7 +93,7 @@ cron.schedule("00 07 * * *", () => {
 			if (hardDays.includes(month)) {
 				month = "0" + month;
 			}
-
+			
 			const queryData = `SELECT 
 				Dishes.Name, Dishes.Price, Dishes.EnergyValue
 					FROM
@@ -139,7 +139,7 @@ cron.schedule("00 07 * * *", () => {
 					for (let i = 0; i < users.length; i++) {
 						await bot.sendMessage(
 							JSON.parse(users[i].UID),
-							message
+							message.replace(/"/g, '').replace(/\\/g, '')
 						);
 					}
 				}
@@ -334,6 +334,7 @@ const connection = mysql.createPool({
 		},
 		async (ctx) => {
 			if (ctx.message.body == "Да" || ctx.message.body == "да") {
+				console.log(orderMax);
 				const sumData = `SELECT 
 				SUM(Dishes.Price) as Sum
 					FROM
@@ -522,6 +523,8 @@ const connection = mysql.createPool({
 	bot.use(stage.middleware());
 
 	bot.command("!добавить", async (ctx) => {
+		let now = new Date(),
+			dayOfWeek = now.getDay() + 1;
 		try {
 			const queryData = `INSERT INTO Messages_Logs(UID, Date, Message) 
 								VALUES("${ctx.message.user_id}","${setTimeToNormal()}","${ctx.message.body}")`;
@@ -563,6 +566,11 @@ const connection = mysql.createPool({
 
 	//COMMANDS HADLING
 	bot.event("message_new", async (ctx) => {
+		let now = new Date(),
+			dayOfWeek = now.getDay() + 1,
+			year = now.getFullYear(),
+			month = now.getMonth() + 1,
+			mday = now.getDate() + 1;
 		try {
 			const queryData = `INSERT INTO Messages_Logs(UID, Date, Message) 
 								VALUES("${ctx.message.user_id}","${setTimeToNormal()}","${ctx.message.body}")`;
@@ -581,6 +589,13 @@ const connection = mysql.createPool({
 					`SELECT * FROM Users WHERE UID = "${ctx.message.user_id}"`,
 					{ type: QueryTypes.SELECT }
 				);
+				let hardDays = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+				if (hardDays.includes(mday)) {
+					mday = "0" + mday;
+				}
+				if (hardDays.includes(month)) {
+					month = "0" + month;
+				}
 				if (activeUsers.length != 0) {
 					let queryData = `SELECT 
 								Dishes.Name, Dishes.Price, Dishes.EnergyValue
