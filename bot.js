@@ -801,8 +801,8 @@ const connection = mysql.createPool({
 				const state = await sequelize.query(
 					`SELECT State, Dishes.Name
 					FROM Orders_Logs
-					INNER JOIN Dishes ON Orders_Logs.ID = Dishes.DishID
-					WHERE Orders_Logs.UserID = "${ctx.message.user_id}" AND DAY(DATE) = ${mday - 1}`,
+					INNER JOIN Dishes ON Orders_Logs.DishID = Dishes.DishID
+					WHERE Orders_Logs.UserID = "${ctx.message.user_id}" AND DAY(DATE) = ${mday - 2}`,
 					{ type: QueryTypes.SELECT }
 				);
 				if (state.length != 0) {
