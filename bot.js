@@ -87,13 +87,17 @@ cron.schedule("00 09 * * *", () => {
 				mday = now.getDate() + 1;
 			let hardDays = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
+			if (mday + 1 > daysInThisMonth()) {
+				mday = 1;
+			}
+
 			if (hardDays.includes(mday)) {
 				mday = "0" + mday;
 			}
 			if (hardDays.includes(month)) {
 				month = "0" + month;
 			}
-			
+
 			const queryData = `SELECT 
 				Dishes.Name, Dishes.Price, Dishes.EnergyValue
 					FROM
@@ -200,6 +204,11 @@ const connection = mysql.createPool({
 	password: process.env.PASSWORD,
 });
 
+function daysInThisMonth() {
+	var now = new Date();
+	return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+}
+
 (async () => {
 	bot.startPolling((error) => {
 		if (error) {
@@ -216,7 +225,7 @@ const connection = mysql.createPool({
 
 	const hardDays = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-	if (mday - 1 === 31) {
+	if (mday + 1 > daysInThisMonth()) {
 		mday = 1;
 	}
 	if (hardDays.includes(mday)) {
@@ -247,15 +256,15 @@ const connection = mysql.createPool({
 			finalOrder.sort((a, b) => a - b);
 			let working = true;
 			for (let i = 0; i < finalOrder.length; i++) {
-				if (finalOrder[i] > 4 || parseInt(finalOrder) == NaN) {
+				if (parseInt(finalOrder[i]) == NaN || finalOrder[i] > 4 || finalOrder == '') {
 					working = false;
 				}
 			}
 			if (!working) {
+				ctx.scene.leave();
 				await ctx.reply(
 					"Неверный ввод заказа. Возможно допущены строковые символы. 🚫"
 				);
-				ctx.scene.leave();
 			}
 			orderMax = [...finalOrder];
 			for (let i = 0; i < finalOrder.length; i++) {
@@ -316,18 +325,19 @@ const connection = mysql.createPool({
 						i++;
 					}
 				}
-
-				await ctx.reply(
-					"Вы уверены? (Да или нет) ⚠",
-					null,
-					Markup.keyboard([
-						[
-							Markup.button("Да", "positive"),
-							Markup.button("Нет", "negative"),
-						],
-					]).oneTime()
-				);
-				ctx.scene.next();
+				if (working) {
+					await ctx.reply(
+						"Вы уверены? (Да или нет) ⚠",
+						null,
+						Markup.keyboard([
+							[
+								Markup.button("Да", "positive"),
+								Markup.button("Нет", "negative"),
+							],
+						]).oneTime()
+					);
+					ctx.scene.next();
+				}
 			} catch (err) {
 				console.error(err);
 			}
@@ -571,6 +581,10 @@ const connection = mysql.createPool({
 			year = now.getFullYear(),
 			month = now.getMonth() + 1,
 			mday = now.getDate() + 1;
+		if (mday + 1 > daysInThisMonth()) {
+			mday = 1;
+		}
+
 		try {
 			const queryData = `INSERT INTO Messages_Logs(UID, Date, Message) 
 								VALUES("${ctx.message.user_id}","${setTimeToNormal()}","${ctx.message.body}")`;
@@ -807,7 +821,7 @@ const connection = mysql.createPool({
 				);
 				if (state.length != 0) {
 					let message = "\n";
-					for(let i =0; i < state.length; i++){
+					for (let i = 0; i < state.length; i++) {
 						message += `${state[i].Name} : ${state[i].State} \n`
 					}
 					await ctx.reply(
