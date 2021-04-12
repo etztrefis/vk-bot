@@ -294,27 +294,17 @@ function daysInThisMonth() {
 						JSON.parse(menuQueryMain[2].DishID),
 						JSON.parse(menuQueryMain[3].DishID),
 					];
-
-					if (orderMax.indexOf(orderMax[0]) != -1) {
-						// if array[i] not null = row[i] else null
-						orderMax[0] = row[0];
-					} else if (orderMax.indexOf(orderMax[0]) == -1) {
-						orderMax[0] = "null";
-					}
-					if (orderMax.indexOf(orderMax[1]) != -1) {
-						orderMax[1] = row[1];
-					} else if (orderMax.indexOf(orderMax[1]) == -1) {
-						orderMax[1] = "null";
-					}
-					if (orderMax.indexOf(orderMax[2]) != -1) {
-						orderMax[2] = row[2];
-					} else if (orderMax.indexOf(orderMax[2]) == -1) {
-						orderMax[2] = "null";
-					}
-					if (orderMax.indexOf(orderMax[3]) != -1) {
-						orderMax[3] = row[3];
-					} else if (orderMax.indexOf(orderMax[3]) == -1) {
-						orderMax[3] = "null";
+					
+					for(let i = 0; i < orderMax.length; i++){
+						if(orderMax[i] == 1){
+							orderMax[i] = row[0]
+						}else if(orderMax[i] == 2){
+							orderMax[i] = row[1]
+						}else if(orderMax[i] == 3){
+							orderMax[i] = row[2]
+						}else if(orderMax[i] == 4){
+							orderMax[i] = row[3]
+						}
 					}
 				}
 				let i = 0;
